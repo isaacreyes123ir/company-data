@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inteligencia Societaria</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        button { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #1d4ed8; }
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .metric-box { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .metric-box h4 { margin: 0 0 10px 0; font-size: 0.85em; color: #64748b; text-transform: uppercase; }
+        .metric-box p { margin: 0; font-size: 1.4em; font-weight: bold; color: #0f172a; }
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" id="expediente" placeholder="Ingrese el número de expediente (ej. 25119)">
+            <button onclick="buscarFinanzas()">Consultar Datos</button>
+        </div>
+
+        <div id="resultados" style="display: none;">
+            <div class="card metrics">
+                <div class="metric-box">
+                    <h4>Ingresos Ventas (Actual)</h4>
+                    <p id="valIngresos">$0</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Utilidad Neta (Actual)</h4>
+                    <p id="valUtilidad">$0</p>
+                </div>
+                <div class="metric-box">
+                    <h4>ROE Empresa vs Sector</h4>
+                    <p id="valRoe">0% / 0%</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Apalancamiento</h4>
+                    <p id="valApalancamiento">0</p>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="card">
+                    <canvas id="graficoEvolucion"></canvas>
+                </div>
+                <div class="card">
+                    <canvas id="graficoLiquidez"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartEvolucion = null;
+        let chartLiquidez = null;
+        const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+        async function buscarFinanzas() {
+            const exp = document.getElementById('expediente').value;
+            if (!exp) return;
+
+            try {
+                const response = await fetch(`https://company-data.duckdns.org/api/v1/finanzas/${exp}`);
+                if (!response.ok) throw new Error('Datos no encontrados');
+                const data = await response.json();
+                renderizarDashboard(data);
+            } catch (error) {
+                alert('Error conectando a la API: ' + error.message);
+            }
+        }
+
+        function renderizarDashboard(data) {
+            document.getElementById('resultados').style.display = 'block';
+            const actual = data.datos[0];
+            
+            document.getElementById('valIngresos').innerText = usd.format(actual.ingresos_ventas);
+            document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
+            document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}% / ${(actual.sector_roe * 100).toFixed(1)}%`;
+            document.getElementById('valApalancamiento').innerText = actual.apalancamiento.toFixed(2);
+
+            const historico = [...data.datos].reverse();
+            const anios = historico.map(d => d.anio);
+            
+            // Gráfico 1: Ventas y Utilidad (Líneas)
+            if (chartEvolucion) chartEvolucion.destroy();
+            const ctxEvolucion = document.getElementById('graficoEvolucion').getContext('2d');
+            chartEvolucion = new Chart(ctxEvolucion, {
+                type: 'line',
+                data: {
+                    labels: anios,
+                    datasets: [
+                        { label: 'Ingresos por Ventas', data: historico.map(d => d.ingresos_ventas), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1 },
+                        { label: 'Utilidad Neta', data: historico.map(d => d.utilidad_neta), borderColor: '#dc2626', backgroundColor: '#dc2626', tension: 0.1 }
+                    ]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Evolución de Ingresos y Utilidad' } } }
+            });
+
+            // Gráfico 2: Liquidez (Barras)
+            if (chartLiquidez) chartLiquidez.destroy();
+            const ctxLiquidez = document.getElementById('graficoLiquidez').getContext('2d');
+            chartLiquidez = new Chart(ctxLiquidez, {
+                type: 'bar',
+                data: {
+                    labels: anios,
+                    datasets: [
+                        { label: 'Liquidez Corriente', data: historico.map(d => d.liquidez_corriente), backgroundColor: '#10b981' },
+                        { label: 'Prueba Ácida', data: historico.map(d => d.prueba_acida), backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Liquidez Corriente vs Prueba Ácida' } } }
+            });
+        }
+    </script>
+</body>
+</html>
