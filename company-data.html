@@ -94,7 +94,7 @@
                     <p id="valUtilidad">$0</p>
                 </div>
                 <div class="metric-box">
-                    <h4>ROE (Emp. / Sec.)</h4>
+                    <h4>ROE</h4>
                     <p id="valRoe">0% / 0%</p>
                 </div>
                 <div class="metric-box">
@@ -284,7 +284,7 @@
             
             document.getElementById('valIngresos').innerText = usd.format(actual.ingresos_ventas);
             document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
-            document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}% / ${(actual.sector_roe * 100).toFixed(1)}%`;
+            document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}%`;
             document.getElementById('valApalancamiento').innerText = actual.apalancamiento.toFixed(2);
             document.getElementById('valEmpleados').innerText = actual.n_empleados || 'N/A';
 
