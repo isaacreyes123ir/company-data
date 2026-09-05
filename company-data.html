@@ -1,202 +1,324 @@
-const API_BASE = "https://company-data.duckdns.org/api/v1";
-let chartEvolucion = null;
-let chartLiquidez = null;
-let rucSeleccionado = ""; 
-let datosPrecargados = null;
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inteligencia Societaria</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 98%; margin: 0 auto; }
+        
+        /* Contenedor del Buscador y Autocompletado */
+        .search-container { position: relative; display: flex; gap: 10px; margin-bottom: 20px; }
+        .autocomplete-wrapper { position: relative; flex: 1; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        button { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        button:hover { background-color: #1d4ed8; }
+        
+        .autocomplete-items { position: absolute; border: 1px solid #d4d4d4; border-bottom: none; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background-color: #fff; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 250px; overflow-y: auto; }
+        .autocomplete-items div { padding: 12px; cursor: pointer; border-bottom: 1px solid #d4d4d4; font-size: 0.9em; display: flex; justify-content: space-between; }
+        .autocomplete-items div:hover { background-color: #e9e9e9; }
+        .item-ruc { color: #64748b; font-weight: bold; }
+        
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .header-title { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
+        .header-title h2 { margin: 0 0 10px 0; color: #0f172a; font-size: 1.5em; text-transform: uppercase; }
+        .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #fff; margin-right: 5px; display: inline-block; }
+        .badge-sri { background-color: #059669; } 
+        .badge-super { background-color: #2563eb; } 
+        .header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 0.9em; }
+        .header-grid div p { margin: 6px 0; color: #475569; }
+        .header-grid strong { color: #1e293b; }
+        .activity-box { margin-top: 15px; padding: 15px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9em; line-height: 1.5;}
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .metric-box { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .metric-box h4 { margin: 0 0 10px 0; font-size: 0.85em; color: #64748b; text-transform: uppercase; }
+        .metric-box p { margin: 0; font-size: 1.4em; font-weight: bold; color: #0f172a; }
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } .search-container { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Buscador con Autocompletado -->
+        <div class="search-container">
+            <div class="autocomplete-wrapper">
+                <input type="text" id="searchInput" placeholder="Escriba el nombre de la empresa o el RUC..." autocomplete="off">
+                <div id="autocompleteList" class="autocomplete-items"></div>
+            </div>
+            <!-- Botón oculto, la búsqueda se dispara al seleccionar en la lista, pero se deja por si el usuario pega el RUC exacto -->
+            <button onclick="ejecutarConsultaManual()">Consultar Datos</button>
+        </div>
 
-const dicClase = {
-    "GEN": "Régimen General",
-    "RMP": "Régimen Impositivo para Microempresas (RIMPE)",
-    "SIM": "Régimen Simplificado Sociedades"
-};
+        <div id="perfilCard" class="card" style="display: none;">
+            <div class="header-title">
+                <h2 id="lblRazonSocial">Cargando...</h2>
+                <span id="lblEstadoSRI" class="badge badge-sri">SRI</span>
+                <span id="lblEstadoSuper" class="badge badge-super">SUPERCIAS</span>
+            </div>
+            <div class="header-grid">
+                <div>
+                    <p><strong>RUC:</strong> <span id="lblRuc"></span></p>
+                    <p><strong>Expediente:</strong> <span id="lblExpediente"></span></p>
+                    <p><strong>Tipo:</strong> <span id="lblTipo"></span></p>
+                    <p><strong>Clase Contribuyente:</strong> <span id="lblClase"></span></p>
+                </div>
+                <div>
+                    <p><strong>Representante:</strong> <span id="lblRepresentante"></span></p>
+                    <p><strong>Cargo:</strong> <span id="lblCargo"></span></p>
+                    <p><strong>Constitución / Inicio:</strong> <span id="lblFechaInicio"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="lblTelefono"></span></p>
+                </div>
+                <div>
+                    <p><strong>Ubicación:</strong> <span id="lblUbicacion"></span></p>
+                    <p><strong>Dirección:</strong> <span id="lblDireccion"></span></p>
+                    <p><strong>Obligado Contabilidad:</strong> <span id="lblObligado"></span></p>
+                    <p><strong>Capital Suscrito:</strong> $<span id="lblCapital"></span></p>
+                </div>
+            </div>
+            <div class="activity-box">
+                <strong>CIIU Nivel 6:</strong> <span id="lblCiiu"></span><br>
+                <strong>Actividad Principal:</strong> <span id="lblActividad"></span>
+            </div>
+        </div>
 
-function corregirCodificacion(texto) {
-    if (!texto) return 'N/A';
-    try { return decodeURIComponent(escape(texto)); } catch (e) { return texto; }
-}
+        <div id="finanzasCard" style="display: none;">
+            <div class="card metrics">
+                <div class="metric-box">
+                    <h4>Ingresos Ventas</h4>
+                    <p id="valIngresos">$0</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Utilidad Neta</h4>
+                    <p id="valUtilidad">$0</p>
+                </div>
+                <div class="metric-box">
+                    <h4>ROE (Emp. / Sec.)</h4>
+                    <p id="valRoe">0% / 0%</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Apalancamiento</h4>
+                    <p id="valApalancamiento">0</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Nº Empleados</h4>
+                    <p id="valEmpleados">0</p>
+                </div>
+            </div>
+            <div class="charts-container">
+                <div class="card">
+                    <canvas id="graficoEvolucion"></canvas>
+                </div>
+                <div class="card">
+                    <canvas id="graficoLiquidez"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-// LÓGICA DEL BUSCADOR EN VIVO
-const input = document.getElementById("searchInput");
-const list = document.getElementById("autocompleteList");
-let timeoutBuscador = null;
+    <script>
+        const API_BASE = "https://company-data.duckdns.org/api/v1";
+        let chartEvolucion = null;
+        let chartLiquidez = null;
+        let rucSeleccionado = ""; 
+        let datosPrecargados = null; 
+        const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-input.addEventListener("input", function() {
-    const val = this.value.trim();
-    list.innerHTML = ''; 
-    if (!val || val.length < 3) {
-        rucSeleccionado = ""; 
-        return;
-    }
+        const dicClase = {
+            "GEN": "Régimen General",
+            "RMP": "Régimen Impositivo para Microempresas (RIMPE)",
+            "SIM": "Régimen Simplificado Sociedades"
+        };
 
-    clearTimeout(timeoutBuscador);
-    timeoutBuscador = setTimeout(async () => {
-        try {
-            const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
-            if (!res.ok) return;
-            const coincidencias = await res.json();
-            
+        function corregirCodificacion(texto) {
+            if (!texto) return 'N/A';
+            try { return decodeURIComponent(escape(texto)); } catch (e) { return texto; }
+        }
+
+        // LÓGICA DEL BUSCADOR Y PRECARGA
+        const input = document.getElementById("searchInput");
+        const list = document.getElementById("autocompleteList");
+        let timeoutBuscador = null;
+
+        input.addEventListener("input", function() {
+            const val = this.value.trim();
             list.innerHTML = ''; 
-            coincidencias.forEach(empresa => {
-                const item = document.createElement("div");
-                item.innerHTML = `<span>${corregirCodificacion(empresa.razon_social)}</span> <span class="item-ruc">${empresa.ruc}</span>`;
-                
-                item.addEventListener("click", function() {
-                    input.value = corregirCodificacion(empresa.razon_social);
-                    rucSeleccionado = empresa.ruc;
-                    list.innerHTML = '';
+            if (!val || val.length < 3) {
+                rucSeleccionado = ""; 
+                return;
+            }
+
+            clearTimeout(timeoutBuscador);
+            timeoutBuscador = setTimeout(async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
+                    if (!res.ok) return;
+                    const coincidencias = await res.json();
                     
-                    preCargarEmpresa(rucSeleccionado);
-                });
-                list.appendChild(item);
+                    list.innerHTML = ''; 
+                    coincidencias.forEach(empresa => {
+                        const item = document.createElement("div");
+                        item.innerHTML = `<span>${corregirCodificacion(empresa.razon_social)}</span> <span class="item-ruc">${empresa.ruc}</span>`;
+                        
+                        item.addEventListener("click", function() {
+                            input.value = corregirCodificacion(empresa.razon_social);
+                            rucSeleccionado = empresa.ruc;
+                            list.innerHTML = '';
+                            preCargarEmpresa(rucSeleccionado);
+                        });
+                        list.appendChild(item);
+                    });
+                } catch (err) {
+                    console.error("Error en búsqueda:", err);
+                }
+            }, 1200); 
+        });
+
+        document.addEventListener("click", function (e) {
+            if (e.target !== input) list.innerHTML = '';
+        });
+
+        async function preCargarEmpresa(ruc) {
+            datosPrecargados = null;
+            try {
+                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
+                if (!resPerfil.ok) return;
+                const perfil = await resPerfil.json();
+                
+                let finanzas = null;
+                const expediente = perfil.directorio ? perfil.directorio.expediente : null;
+                if (expediente) {
+                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
+                    if (resFinanzas.ok) {
+                        finanzas = await resFinanzas.json();
+                    }
+                }
+                datosPrecargados = { ruc: ruc, perfil: perfil, finanzas: finanzas };
+            } catch (error) {
+                console.error('Error en precarga:', error);
+            }
+        }
+
+        function ejecutarConsultaManual() {
+            const target = rucSeleccionado || input.value.trim(); 
+            if(!target) return;
+
+            if (datosPrecargados && datosPrecargados.ruc === target) {
+                renderizarPerfil(datosPrecargados.perfil);
+                if (datosPrecargados.finanzas) {
+                    renderizarFinanzas(datosPrecargados.finanzas);
+                }
+            } else {
+                consultarEmpresa(target);
+            }
+        }
+
+        // RESPALDO: CONSULTA DIRECTA SI AÚN NO PRECARGA
+        async function consultarEmpresa(ruc) {
+            document.getElementById('perfilCard').style.display = 'none';
+            document.getElementById('finanzasCard').style.display = 'none';
+
+            try {
+                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
+                if (!resPerfil.ok) throw new Error('Empresa no encontrada en registros.');
+                const perfil = await resPerfil.json();
+                
+                renderizarPerfil(perfil);
+
+                const expediente = perfil.directorio ? perfil.directorio.expediente : null;
+                if (expediente) {
+                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
+                    if (resFinanzas.ok) {
+                        const finanzas = await resFinanzas.json();
+                        renderizarFinanzas(finanzas);
+                    }
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // RENDERIZADO DE DATOS
+        function renderizarPerfil(data) {
+            document.getElementById('perfilCard').style.display = 'block';
+            const sri = data.sri || {};
+            const dir = data.directorio || {};
+
+            document.getElementById('lblRazonSocial').innerText = corregirCodificacion(sri.razon_social || dir.nombre || 'Nombre no disponible');
+            document.getElementById('lblEstadoSRI').innerText = `SRI: ${sri.estado_contribuyente || 'N/A'}`;
+            document.getElementById('lblEstadoSuper').innerText = `SUPERCIAS: ${dir.situacion_legal || 'N/A'}`;
+            
+            document.getElementById('lblEstadoSRI').style.backgroundColor = sri.estado_contribuyente === 'ACTIVO' ? '#059669' : '#dc2626';
+            document.getElementById('lblEstadoSuper').style.backgroundColor = (dir.situacion_legal && dir.situacion_legal.includes('ACTIVA')) ? '#2563eb' : '#64748b';
+
+            document.getElementById('lblRuc').innerText = sri.numero_ruc || dir.ruc || 'N/A';
+            document.getElementById('lblExpediente').innerText = dir.expediente || 'N/A';
+            
+            document.getElementById('lblTipo').innerText = corregirCodificacion(dir.tipo || 'N/A');
+            const claseRaw = sri.clase_contribuyente ? sri.clase_contribuyente.trim() : '';
+            document.getElementById('lblClase').innerText = corregirCodificacion(dicClase[claseRaw] || claseRaw || 'N/A');
+            
+            document.getElementById('lblRepresentante').innerText = corregirCodificacion(dir.representante || 'N/A');
+            document.getElementById('lblCargo').innerText = corregirCodificacion(dir.cargo || 'N/A');
+            document.getElementById('lblFechaInicio').innerText = dir.fecha_constitucion || sri.fecha_inicio_actividades || 'N/A';
+            document.getElementById('lblTelefono').innerText = dir.telefono || 'N/A';
+
+            const ubicacion = sri.descripcion_provincia_est ? `${sri.descripcion_provincia_est}, ${sri.descripcion_canton_est}` : (dir.provincia ? `${dir.provincia}, ${dir.canton}` : 'N/A');
+            const direccion = dir.calle ? `${dir.calle} y ${dir.interseccion || ''}` : 'N/A';
+            
+            document.getElementById('lblUbicacion').innerText = corregirCodificacion(ubicacion);
+            document.getElementById('lblDireccion').innerText = corregirCodificacion(direccion);
+            document.getElementById('lblObligado').innerText = sri.obligado === 'S' ? 'SÍ' : (sri.obligado === 'N' ? 'NO' : 'N/A');
+            document.getElementById('lblCapital').innerText = dir.capital_suscrito || '0.00';
+            
+            document.getElementById('lblCiiu').innerText = dir.ciiu_nivel_6 || 'N/A';
+            document.getElementById('lblActividad').innerText = corregirCodificacion(sri.actividad_economica || 'N/A');
+        }
+
+        function renderizarFinanzas(data) {
+            if(!data.datos || data.datos.length === 0) return;
+            document.getElementById('finanzasCard').style.display = 'block';
+            
+            const actual = data.datos[0];
+            
+            document.getElementById('valIngresos').innerText = usd.format(actual.ingresos_ventas);
+            document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
+            document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}% / ${(actual.sector_roe * 100).toFixed(1)}%`;
+            document.getElementById('valApalancamiento').innerText = actual.apalancamiento.toFixed(2);
+            document.getElementById('valEmpleados').innerText = actual.n_empleados || 'N/A';
+
+            const historico = [...data.datos].reverse();
+            const anios = historico.map(d => d.anio);
+            
+            if (chartEvolucion) chartEvolucion.destroy();
+            const ctxEvolucion = document.getElementById('graficoEvolucion').getContext('2d');
+            chartEvolucion = new Chart(ctxEvolucion, {
+                type: 'line',
+                data: {
+                    labels: anios,
+                    datasets: [
+                        { label: 'Ingresos por Ventas', data: historico.map(d => d.ingresos_ventas), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1 },
+                        { label: 'Utilidad Neta', data: historico.map(d => d.utilidad_neta), borderColor: '#dc2626', backgroundColor: '#dc2626', tension: 0.1 }
+                    ]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Evolución de Ingresos y Utilidad' } } }
             });
-        } catch (err) {
-            console.error("Error en búsqueda:", err);
+
+            if (chartLiquidez) chartLiquidez.destroy();
+            const ctxLiquidez = document.getElementById('graficoLiquidez').getContext('2d');
+            chartLiquidez = new Chart(ctxLiquidez, {
+                type: 'bar',
+                data: {
+                    labels: anios,
+                    datasets: [
+                        { label: 'Liquidez Corriente', data: historico.map(d => d.liquidez_corriente), backgroundColor: '#10b981' },
+                        { label: 'Prueba Ácida', data: historico.map(d => d.prueba_acida), backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Liquidez Corriente vs Prueba Ácida' } } }
+            });
         }
-    }, 1200); 
-});
-
-document.addEventListener("click", function (e) {
-    if (e.target !== input) list.innerHTML = '';
-});
-
-// DESCARGA INVISIBLE EN SEGUNDO PLANO
-async function preCargarEmpresa(ruc) {
-    datosPrecargados = null;
-    try {
-        const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
-        if (!resPerfil.ok) return;
-        const perfil = await resPerfil.json();
-        
-        let finanzas = null;
-        const expediente = perfil.directorio ? perfil.directorio.expediente : null;
-        if (expediente) {
-            const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
-            if (resFinanzas.ok) {
-                finanzas = await resFinanzas.json();
-            }
-        }
-        datosPrecargados = { ruc: ruc, perfil: perfil, finanzas: finanzas };
-    } catch (error) {
-        console.error('Error en precarga:', error);
-    }
-}
-
-// AL PRESIONAR EL BOTÓN "CONSULTAR DATOS"
-function ejecutarConsultaManual() {
-    const target = rucSeleccionado || input.value.trim(); 
-    if(!target) return;
-
-    if (datosPrecargados && datosPrecargados.ruc === target) {
-        renderizarPerfil(datosPrecargados.perfil);
-        if (datosPrecargados.finanzas) {
-            renderizarFinanzas(datosPrecargados.finanzas);
-        }
-    } else {
-        consultarEmpresa(target);
-    }
-}
-
-async function consultarEmpresa(ruc) {
-    document.getElementById('perfilCard').style.display = 'none';
-    document.getElementById('finanzasCard').style.display = 'none';
-
-    try {
-        const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
-        if (!resPerfil.ok) throw new Error('Empresa no encontrada en registros.');
-        const perfil = await resPerfil.json();
-        
-        renderizarPerfil(perfil);
-
-        const expediente = perfil.directorio ? perfil.directorio.expediente : null;
-        if (expediente) {
-            const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
-            if (resFinanzas.ok) {
-                const finanzas = await resFinanzas.json();
-                renderizarFinanzas(finanzas);
-            }
-        }
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-}
-
-function renderizarPerfil(data) {
-    document.getElementById('perfilCard').style.display = 'block';
-    const sri = data.sri || {};
-    const dir = data.directorio || {};
-
-    document.getElementById('lblRazonSocial').innerText = corregirCodificacion(sri.razon_social || dir.nombre || 'Nombre no disponible');
-    document.getElementById('lblEstadoSRI').innerText = `SRI: ${sri.estado_contribuyente || 'N/A'}`;
-    document.getElementById('lblEstadoSuper').innerText = `SUPERCIAS: ${dir.situacion_legal || 'N/A'}`;
-    
-    document.getElementById('lblEstadoSRI').style.backgroundColor = sri.estado_contribuyente === 'ACTIVO' ? '#059669' : '#dc2626';
-    document.getElementById('lblEstadoSuper').style.backgroundColor = (dir.situacion_legal && dir.situacion_legal.includes('ACTIVA')) ? '#2563eb' : '#64748b';
-
-    document.getElementById('lblRuc').innerText = sri.numero_ruc || dir.ruc || 'N/A';
-    document.getElementById('lblExpediente').innerText = dir.expediente || 'N/A';
-    
-    document.getElementById('lblTipo').innerText = corregirCodificacion(dir.tipo || 'N/A');
-    const claseRaw = sri.clase_contribuyente ? sri.clase_contribuyente.trim() : '';
-    document.getElementById('lblClase').innerText = corregirCodificacion(dicClase[claseRaw] || claseRaw || 'N/A');
-    
-    document.getElementById('lblRepresentante').innerText = corregirCodificacion(dir.representante || 'N/A');
-    document.getElementById('lblCargo').innerText = corregirCodificacion(dir.cargo || 'N/A');
-    document.getElementById('lblFechaInicio').innerText = dir.fecha_constitucion || sri.fecha_inicio_actividades || 'N/A';
-    document.getElementById('lblTelefono').innerText = dir.telefono || 'N/A';
-
-    const ubicacion = sri.descripcion_provincia_est ? `${sri.descripcion_provincia_est}, ${sri.descripcion_canton_est}` : (dir.provincia ? `${dir.provincia}, ${dir.canton}` : 'N/A');
-    const direccion = dir.calle ? `${dir.calle} y ${dir.interseccion || ''}` : 'N/A';
-    
-    document.getElementById('lblUbicacion').innerText = corregirCodificacion(ubicacion);
-    document.getElementById('lblDireccion').innerText = corregirCodificacion(direccion);
-    document.getElementById('lblObligado').innerText = sri.obligado === 'S' ? 'SÍ' : (sri.obligado === 'N' ? 'NO' : 'N/A');
-    document.getElementById('lblCapital').innerText = dir.capital_suscrito || '0.00';
-    
-    document.getElementById('lblCiiu').innerText = dir.ciiu_nivel_6 || 'N/A';
-    document.getElementById('lblActividad').innerText = corregirCodificacion(sri.actividad_economica || 'N/A');
-}
-
-function renderizarFinanzas(data) {
-    if(!data.datos || data.datos.length === 0) return;
-    document.getElementById('finanzasCard').style.display = 'block';
-    
-    const actual = data.datos[0];
-    
-    document.getElementById('valIngresos').innerText = usd.format(actual.ingresos_ventas);
-    document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
-    document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}% / ${(actual.sector_roe * 100).toFixed(1)}%`;
-    document.getElementById('valApalancamiento').innerText = actual.apalancamiento.toFixed(2);
-    document.getElementById('valEmpleados').innerText = actual.n_empleados || 'N/A';
-
-    const historico = [...data.datos].reverse();
-    const anios = historico.map(d => d.anio);
-    
-    if (chartEvolucion) chartEvolucion.destroy();
-    const ctxEvolucion = document.getElementById('graficoEvolucion').getContext('2d');
-    chartEvolucion = new Chart(ctxEvolucion, {
-        type: 'line',
-        data: {
-            labels: anios,
-            datasets: [
-                { label: 'Ingresos por Ventas', data: historico.map(d => d.ingresos_ventas), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1 },
-                { label: 'Utilidad Neta', data: historico.map(d => d.utilidad_neta), borderColor: '#dc2626', backgroundColor: '#dc2626', tension: 0.1 }
-            ]
-        },
-        options: { responsive: true, plugins: { title: { display: true, text: 'Evolución de Ingresos y Utilidad' } } }
-    });
-
-    if (chartLiquidez) chartLiquidez.destroy();
-    const ctxLiquidez = document.getElementById('graficoLiquidez').getContext('2d');
-    chartLiquidez = new Chart(ctxLiquidez, {
-        type: 'bar',
-        data: {
-            labels: anios,
-            datasets: [
-                { label: 'Liquidez Corriente', data: historico.map(d => d.liquidez_corriente), backgroundColor: '#10b981' },
-                { label: 'Prueba Ácida', data: historico.map(d => d.prueba_acida), backgroundColor: '#f59e0b' }
-            ]
-        },
-        options: { responsive: true, plugins: { title: { display: true, text: 'Liquidez Corriente vs Prueba Ácida' } } }
-    });
-}
+    </script>
+</body>
+</html>
