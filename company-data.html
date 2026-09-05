@@ -155,7 +155,7 @@
                     const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
                     if (!res.ok) return;
                     const coincidencias = await res.json();
-                    
+                    list.innerHTML = '';
                     coincidencias.forEach(empresa => {
                         const item = document.createElement("div");
                         item.innerHTML = `<span>${corregirCodificacion(empresa.razon_social)}</span> <span class="item-ruc">${empresa.ruc}</span>`;
