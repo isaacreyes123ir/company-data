@@ -135,7 +135,7 @@
             try { return decodeURIComponent(escape(texto)); } catch (e) { return texto; }
         }
 
-        // LÓGICA DEL BUSCADOR EN VIVO
+        // LÓGICA DEL BUSCADOR EN VIVO (Con debounce de 1.2 segundos)
         const input = document.getElementById("searchInput");
         const list = document.getElementById("autocompleteList");
         let timeoutBuscador = null;
@@ -148,14 +148,17 @@
                 return;
             }
 
-            // Debounce: espera 300ms a que dejes de escribir para no bombardear la base de datos
+            // Limpia el temporizador anterior cada vez que presiona una tecla
             clearTimeout(timeoutBuscador);
+
+            // AQUÍ CAMBIAS EL TIEMPO (1200 ms = 1.2 segundos de pausa)
             timeoutBuscador = setTimeout(async () => {
                 try {
                     const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
                     if (!res.ok) return;
                     const coincidencias = await res.json();
-                    list.innerHTML = '';
+                    
+                    list.innerHTML = ''; 
                     coincidencias.forEach(empresa => {
                         const item = document.createElement("div");
                         item.innerHTML = `<span>${corregirCodificacion(empresa.razon_social)}</span> <span class="item-ruc">${empresa.ruc}</span>`;
@@ -164,14 +167,14 @@
                             input.value = corregirCodificacion(empresa.razon_social);
                             rucSeleccionado = empresa.ruc;
                             list.innerHTML = '';
-                            consultarEmpresa(rucSeleccionado); // Ejecuta la consulta automáticamente
+                            consultarEmpresa(rucSeleccionado);
                         });
                         list.appendChild(item);
                     });
                 } catch (err) {
                     console.error("Error en búsqueda:", err);
                 }
-            }, 300);
+            }, 1200); // <- 1200 milisegundos de respiro para tu servidor
         });
 
         // Cierra la lista si haces clic afuera
