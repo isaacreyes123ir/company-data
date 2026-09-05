@@ -9,41 +9,36 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1000px; margin: 0 auto; }
         
-        /* Buscador */
         .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
         input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
         button { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #1d4ed8; }
         
-        /* Tarjetas Base */
         .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        /* Encabezado Corporativo */
         .header-title { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
         .header-title h2 { margin: 0 0 10px 0; color: #0f172a; font-size: 1.5em; text-transform: uppercase; }
         .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #fff; margin-right: 5px; display: inline-block; }
-        .badge-sri { background-color: #059669; } /* Verde */
-        .badge-super { background-color: #2563eb; } /* Azul */
+        .badge-sri { background-color: #059669; } 
+        .badge-super { background-color: #2563eb; } 
         
         .header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 0.9em; }
-        .header-grid div p { margin: 5px 0; color: #475569; }
+        .header-grid div p { margin: 6px 0; color: #475569; }
         .header-grid strong { color: #1e293b; }
         
-        .activity-box { margin-top: 15px; padding: 10px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9em; }
+        .activity-box { margin-top: 15px; padding: 15px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9em; line-height: 1.5;}
 
-        /* Métricas y Gráficos */
-        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
         .metric-box { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .metric-box h4 { margin: 0 0 10px 0; font-size: 0.85em; color: #64748b; text-transform: uppercase; }
         .metric-box p { margin: 0; font-size: 1.4em; font-weight: bold; color: #0f172a; }
-        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Buscador por RUC -->
         <div class="search-bar">
             <input type="text" id="rucInput" placeholder="Ingrese el RUC de la empresa (ej. 0990000000001)">
             <button onclick="consultarEmpresa()">Consultar Datos</button>
@@ -60,21 +55,25 @@
                 <div>
                     <p><strong>RUC:</strong> <span id="lblRuc"></span></p>
                     <p><strong>Expediente:</strong> <span id="lblExpediente"></span></p>
-                    <p><strong>Tipo Sociedad:</strong> <span id="lblTipo"></span></p>
+                    <p><strong>Tipo Contribuyente:</strong> <span id="lblTipo"></span></p>
+                    <p><strong>Clase Contribuyente:</strong> <span id="lblClase"></span></p>
                 </div>
                 <div>
                     <p><strong>Representante:</strong> <span id="lblRepresentante"></span></p>
                     <p><strong>Cargo:</strong> <span id="lblCargo"></span></p>
                     <p><strong>Constitución / Inicio:</strong> <span id="lblFechaInicio"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="lblTelefono"></span></p>
                 </div>
                 <div>
                     <p><strong>Ubicación:</strong> <span id="lblUbicacion"></span></p>
                     <p><strong>Dirección:</strong> <span id="lblDireccion"></span></p>
                     <p><strong>Obligado Contabilidad:</strong> <span id="lblObligado"></span></p>
+                    <p><strong>Capital Suscrito:</strong> $<span id="lblCapital"></span></p>
                 </div>
             </div>
             <div class="activity-box">
-                <strong>Actividad Principal (CIIU):</strong> <span id="lblActividad"></span>
+                <strong>CIIU Nivel 6:</strong> <span id="lblCiiu"></span><br>
+                <strong>Actividad Principal:</strong> <span id="lblActividad"></span>
             </div>
         </div>
 
@@ -82,20 +81,24 @@
         <div id="finanzasCard" style="display: none;">
             <div class="card metrics">
                 <div class="metric-box">
-                    <h4>Ingresos Ventas (Actual)</h4>
+                    <h4>Ingresos Ventas</h4>
                     <p id="valIngresos">$0</p>
                 </div>
                 <div class="metric-box">
-                    <h4>Utilidad Neta (Actual)</h4>
+                    <h4>Utilidad Neta</h4>
                     <p id="valUtilidad">$0</p>
                 </div>
                 <div class="metric-box">
-                    <h4>ROE Empresa vs Sector</h4>
+                    <h4>ROE (Emp. / Sec.)</h4>
                     <p id="valRoe">0% / 0%</p>
                 </div>
                 <div class="metric-box">
                     <h4>Apalancamiento</h4>
                     <p id="valApalancamiento">0</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Nº Empleados</h4>
+                    <p id="valEmpleados">0</p>
                 </div>
             </div>
 
@@ -116,23 +119,30 @@
         let chartLiquidez = null;
         const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
+        // Función para corregir caracteres extraños (ISO-8859-1 interpretado como UTF-8)
+        function corregirCodificacion(texto) {
+            if (!texto) return 'N/A';
+            try {
+                return decodeURIComponent(escape(texto));
+            } catch (e) {
+                return texto; // Si falla, devuelve el original
+            }
+        }
+
         async function consultarEmpresa() {
             const ruc = document.getElementById('rucInput').value.trim();
             if (!ruc) return;
 
-            // Limpiar vistas
             document.getElementById('perfilCard').style.display = 'none';
             document.getElementById('finanzasCard').style.display = 'none';
 
             try {
-                // 1. Consultar Perfil (SRI + Directorio)
                 const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
                 if (!resPerfil.ok) throw new Error('Empresa no encontrada en registros.');
                 const perfil = await resPerfil.json();
                 
                 renderizarPerfil(perfil);
 
-                // 2. Extraer expediente y consultar Finanzas
                 const expediente = perfil.directorio ? perfil.directorio.expediente : null;
                 if (expediente) {
                     const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
@@ -152,36 +162,33 @@
             const sri = data.sri || {};
             const dir = data.directorio || {};
 
-            // Nombres y Estados
-            document.getElementById('lblRazonSocial').innerText = sri.razon_social || dir.nombre || 'Nombre no disponible';
+            document.getElementById('lblRazonSocial').innerText = corregirCodificacion(sri.razon_social || dir.nombre || 'Nombre no disponible');
             document.getElementById('lblEstadoSRI').innerText = `SRI: ${sri.estado_contribuyente || 'N/A'}`;
             document.getElementById('lblEstadoSuper').innerText = `SUPERCIAS: ${dir.situacion_legal || 'N/A'}`;
             
-            // Colores de los badges según estado (Opcional: cambiar a rojo si está cancelada)
             document.getElementById('lblEstadoSRI').style.backgroundColor = sri.estado_contribuyente === 'ACTIVO' ? '#059669' : '#dc2626';
             document.getElementById('lblEstadoSuper').style.backgroundColor = (dir.situacion_legal && dir.situacion_legal.includes('ACTIVA')) ? '#2563eb' : '#64748b';
 
-            // Datos Generales
             document.getElementById('lblRuc').innerText = sri.numero_ruc || dir.ruc || 'N/A';
             document.getElementById('lblExpediente').innerText = dir.expediente || 'N/A';
-            document.getElementById('lblTipo').innerText = dir.tipo || sri.tipo_contribuyente || 'N/A';
+            document.getElementById('lblTipo').innerText = corregirCodificacion(sri.tipo_contribuyente || dir.tipo || 'N/A');
+            document.getElementById('lblClase').innerText = corregirCodificacion(sri.clase_contribuyente || 'N/A');
             
-            // Representante
-            document.getElementById('lblRepresentante').innerText = dir.representante || 'N/A';
-            document.getElementById('lblCargo').innerText = dir.cargo || 'N/A';
+            document.getElementById('lblRepresentante').innerText = corregirCodificacion(dir.representante || 'N/A');
+            document.getElementById('lblCargo').innerText = corregirCodificacion(dir.cargo || 'N/A');
             document.getElementById('lblFechaInicio').innerText = dir.fecha_constitucion || sri.fecha_inicio_actividades || 'N/A';
+            document.getElementById('lblTelefono').innerText = dir.telefono || 'N/A';
 
-            // Ubicación
             const ubicacion = sri.descripcion_provincia_est ? `${sri.descripcion_provincia_est}, ${sri.descripcion_canton_est}` : (dir.provincia ? `${dir.provincia}, ${dir.canton}` : 'N/A');
             const direccion = dir.calle ? `${dir.calle} y ${dir.interseccion || ''}` : 'N/A';
             
-            document.getElementById('lblUbicacion').innerText = ubicacion;
-            document.getElementById('lblDireccion').innerText = direccion;
+            document.getElementById('lblUbicacion').innerText = corregirCodificacion(ubicacion);
+            document.getElementById('lblDireccion').innerText = corregirCodificacion(direccion);
             document.getElementById('lblObligado').innerText = sri.obligado === 'S' ? 'SÍ' : (sri.obligado === 'N' ? 'NO' : 'N/A');
+            document.getElementById('lblCapital').innerText = dir.capital_suscrito || '0.00';
             
-            // Actividad
-            const actividad = sri.actividad_economica || `CIIU: ${dir.ciiu_nivel_6 || dir.ciiu_nivel_1 || 'N/A'}`;
-            document.getElementById('lblActividad').innerText = actividad;
+            document.getElementById('lblCiiu').innerText = dir.ciiu_nivel_6 || 'N/A';
+            document.getElementById('lblActividad').innerText = corregirCodificacion(sri.actividad_economica || 'N/A');
         }
 
         function renderizarFinanzas(data) {
@@ -194,11 +201,11 @@
             document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
             document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}% / ${(actual.sector_roe * 100).toFixed(1)}%`;
             document.getElementById('valApalancamiento').innerText = actual.apalancamiento.toFixed(2);
+            document.getElementById('valEmpleados').innerText = actual.n_empleados || 'N/A'; // Nuevo campo
 
             const historico = [...data.datos].reverse();
             const anios = historico.map(d => d.anio);
             
-            // Gráfico 1: Ventas y Utilidad
             if (chartEvolucion) chartEvolucion.destroy();
             const ctxEvolucion = document.getElementById('graficoEvolucion').getContext('2d');
             chartEvolucion = new Chart(ctxEvolucion, {
@@ -213,7 +220,6 @@
                 options: { responsive: true, plugins: { title: { display: true, text: 'Evolución de Ingresos y Utilidad' } } }
             });
 
-            // Gráfico 2: Liquidez
             if (chartLiquidez) chartLiquidez.destroy();
             const ctxLiquidez = document.getElementById('graficoLiquidez').getContext('2d');
             chartLiquidez = new Chart(ctxLiquidez, {
