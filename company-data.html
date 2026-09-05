@@ -7,7 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
+        /* Se cambió max-width de 1000px a 98% para ocupar todo el ancho */
+        .container { max-width: 98%; margin: 0 auto; }
         
         .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
         input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
@@ -55,7 +56,7 @@
                 <div>
                     <p><strong>RUC:</strong> <span id="lblRuc"></span></p>
                     <p><strong>Expediente:</strong> <span id="lblExpediente"></span></p>
-                    <p><strong>Tipo Contribuyente:</strong> <span id="lblTipo"></span></p>
+                    <p><strong>Tipo:</strong> <span id="lblTipo"></span></p>
                     <p><strong>Clase Contribuyente:</strong> <span id="lblClase"></span></p>
                 </div>
                 <div>
@@ -119,13 +120,18 @@
         let chartLiquidez = null;
         const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-        // Función para corregir caracteres extraños (ISO-8859-1 interpretado como UTF-8)
+        const dicClase = {
+            "GEN": "Régimen General",
+            "RMP": "Régimen Impositivo para Microempresas (RIMPE)",
+            "SIM": "Régimen Simplificado Sociedades"
+        };
+
         function corregirCodificacion(texto) {
             if (!texto) return 'N/A';
             try {
                 return decodeURIComponent(escape(texto));
             } catch (e) {
-                return texto; // Si falla, devuelve el original
+                return texto;
             }
         }
 
@@ -171,8 +177,13 @@
 
             document.getElementById('lblRuc').innerText = sri.numero_ruc || dir.ruc || 'N/A';
             document.getElementById('lblExpediente').innerText = dir.expediente || 'N/A';
-            document.getElementById('lblTipo').innerText = corregirCodificacion(sri.tipo_contribuyente || dir.tipo || 'N/A');
-            document.getElementById('lblClase').innerText = corregirCodificacion(sri.clase_contribuyente || 'N/A');
+            
+            // Tipo de la tabla DIRECTORIO_COMPLETO
+            document.getElementById('lblTipo').innerText = corregirCodificacion(dir.tipo || 'N/A');
+            
+            // Diccionario para clase contribuyente
+            const claseRaw = sri.clase_contribuyente ? sri.clase_contribuyente.trim() : '';
+            document.getElementById('lblClase').innerText = corregirCodificacion(dicClase[claseRaw] || claseRaw || 'N/A');
             
             document.getElementById('lblRepresentante').innerText = corregirCodificacion(dir.representante || 'N/A');
             document.getElementById('lblCargo').innerText = corregirCodificacion(dir.cargo || 'N/A');
@@ -201,7 +212,7 @@
             document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
             document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}% / ${(actual.sector_roe * 100).toFixed(1)}%`;
             document.getElementById('valApalancamiento').innerText = actual.apalancamiento.toFixed(2);
-            document.getElementById('valEmpleados').innerText = actual.n_empleados || 'N/A'; // Nuevo campo
+            document.getElementById('valEmpleados').innerText = actual.n_empleados || 'N/A';
 
             const historico = [...data.datos].reverse();
             const anios = historico.map(d => d.anio);
