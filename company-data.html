@@ -136,7 +136,7 @@
             try { return decodeURIComponent(escape(texto)); } catch (e) { return texto; }
         }
 
-        // LÓGICA DEL BUSCADOR EN VIVO (Con debounce de 1.2 segundos)
+        // LÓGICA DEL BUSCADOR EN VIVO
         const input = document.getElementById("searchInput");
         const list = document.getElementById("autocompleteList");
         let timeoutBuscador = null;
@@ -148,6 +148,74 @@
                 rucSeleccionado = ""; 
                 return;
             }
+
+            clearTimeout(timeoutBuscador);
+            timeoutBuscador = setTimeout(async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
+                    if (!res.ok) return;
+                    const coincidencias = await res.json();
+                    
+                    list.innerHTML = ''; 
+                    coincidencias.forEach(empresa => {
+                        const item = document.createElement("div");
+                        item.innerHTML = `<span>${corregirCodificacion(empresa.razon_social)}</span> <span class="item-ruc">${empresa.ruc}</span>`;
+                        
+                        item.addEventListener("click", function() {
+                            input.value = corregirCodificacion(empresa.razon_social);
+                            rucSeleccionado = empresa.ruc;
+                            list.innerHTML = '';
+                            
+                            // Inicia la descarga invisible de datos (No los muestra aún)
+                            preCargarEmpresa(rucSeleccionado);
+                        });
+                        list.appendChild(item);
+                    });
+                } catch (err) {
+                    console.error("Error en búsqueda:", err);
+                }
+            }, 1200); 
+        });
+
+        // DESCARGA INVISIBLE EN SEGUNDO PLANO
+        async function preCargarEmpresa(ruc) {
+            datosPrecargados = null;
+            try {
+                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
+                if (!resPerfil.ok) return;
+                const perfil = await resPerfil.json();
+                
+                let finanzas = null;
+                const expediente = perfil.directorio ? perfil.directorio.expediente : null;
+                if (expediente) {
+                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
+                    if (resFinanzas.ok) {
+                        finanzas = await resFinanzas.json();
+                    }
+                }
+                // Guarda los datos listos en la memoria RAM del navegador
+                datosPrecargados = { ruc: ruc, perfil: perfil, finanzas: finanzas };
+            } catch (error) {
+                console.error('Error en precarga:', error);
+            }
+        }
+
+        // AL PRESIONAR EL BOTÓN "CONSULTAR DATOS"
+        function ejecutarConsultaManual() {
+            const target = rucSeleccionado || input.value.trim(); 
+            if(!target) return;
+
+            // Si los datos ya se descargaron, aparecen al instante
+            if (datosPrecargados && datosPrecargados.ruc === target) {
+                renderizarPerfil(datosPrecargados.perfil);
+                if (datosPrecargados.finanzas) {
+                    renderizarFinanzas(datosPrecargados.finanzas);
+                }
+            } else {
+                // Si presionó el botón antes de que termine la precarga, hace la consulta normal
+                consultarEmpresa(target);
+            }
+        }
 
             // Limpia el temporizador anterior cada vez que presiona una tecla
             clearTimeout(timeoutBuscador);
