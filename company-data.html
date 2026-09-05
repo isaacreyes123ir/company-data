@@ -7,45 +7,50 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
-        /* Se cambió max-width de 1000px a 98% para ocupar todo el ancho */
         .container { max-width: 98%; margin: 0 auto; }
         
-        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-        button { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        /* Contenedor del Buscador y Autocompletado */
+        .search-container { position: relative; display: flex; gap: 10px; margin-bottom: 20px; }
+        .autocomplete-wrapper { position: relative; flex: 1; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        button { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap; }
         button:hover { background-color: #1d4ed8; }
         
-        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .autocomplete-items { position: absolute; border: 1px solid #d4d4d4; border-bottom: none; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background-color: #fff; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 250px; overflow-y: auto; }
+        .autocomplete-items div { padding: 12px; cursor: pointer; border-bottom: 1px solid #d4d4d4; font-size: 0.9em; display: flex; justify-content: space-between; }
+        .autocomplete-items div:hover { background-color: #e9e9e9; }
+        .item-ruc { color: #64748b; font-weight: bold; }
         
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .header-title { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
         .header-title h2 { margin: 0 0 10px 0; color: #0f172a; font-size: 1.5em; text-transform: uppercase; }
         .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #fff; margin-right: 5px; display: inline-block; }
         .badge-sri { background-color: #059669; } 
         .badge-super { background-color: #2563eb; } 
-        
         .header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 0.9em; }
         .header-grid div p { margin: 6px 0; color: #475569; }
         .header-grid strong { color: #1e293b; }
-        
         .activity-box { margin-top: 15px; padding: 15px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9em; line-height: 1.5;}
-
         .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
         .metric-box { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .metric-box h4 { margin: 0 0 10px 0; font-size: 0.85em; color: #64748b; text-transform: uppercase; }
         .metric-box p { margin: 0; font-size: 1.4em; font-weight: bold; color: #0f172a; }
-        
         .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } .search-container { flex-direction: column; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="search-bar">
-            <input type="text" id="rucInput" placeholder="Ingrese el RUC de la empresa (ej. 0990000000001)">
-            <button onclick="consultarEmpresa()">Consultar Datos</button>
+        <!-- Buscador con Autocompletado -->
+        <div class="search-container">
+            <div class="autocomplete-wrapper">
+                <input type="text" id="searchInput" placeholder="Escriba el nombre de la empresa o el RUC..." autocomplete="off">
+                <div id="autocompleteList" class="autocomplete-items"></div>
+            </div>
+            <!-- Botón oculto, la búsqueda se dispara al seleccionar en la lista, pero se deja por si el usuario pega el RUC exacto -->
+            <button onclick="ejecutarConsultaManual()">Consultar Datos</button>
         </div>
 
-        <!-- ENCABEZADO CORPORATIVO -->
         <div id="perfilCard" class="card" style="display: none;">
             <div class="header-title">
                 <h2 id="lblRazonSocial">Cargando...</h2>
@@ -78,7 +83,6 @@
             </div>
         </div>
 
-        <!-- SECCIÓN FINANCIERA -->
         <div id="finanzasCard" style="display: none;">
             <div class="card metrics">
                 <div class="metric-box">
@@ -102,7 +106,6 @@
                     <p id="valEmpleados">0</p>
                 </div>
             </div>
-
             <div class="charts-container">
                 <div class="card">
                     <canvas id="graficoEvolucion"></canvas>
@@ -118,6 +121,7 @@
         const API_BASE = "https://company-data.duckdns.org/api/v1";
         let chartEvolucion = null;
         let chartLiquidez = null;
+        let rucSeleccionado = ""; // Almacena el RUC real para consultar
         const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
         const dicClase = {
@@ -128,17 +132,61 @@
 
         function corregirCodificacion(texto) {
             if (!texto) return 'N/A';
-            try {
-                return decodeURIComponent(escape(texto));
-            } catch (e) {
-                return texto;
-            }
+            try { return decodeURIComponent(escape(texto)); } catch (e) { return texto; }
         }
 
-        async function consultarEmpresa() {
-            const ruc = document.getElementById('rucInput').value.trim();
-            if (!ruc) return;
+        // LÓGICA DEL BUSCADOR EN VIVO
+        const input = document.getElementById("searchInput");
+        const list = document.getElementById("autocompleteList");
+        let timeoutBuscador = null;
 
+        input.addEventListener("input", function() {
+            const val = this.value.trim();
+            list.innerHTML = ''; 
+            if (!val || val.length < 3) {
+                rucSeleccionado = ""; 
+                return;
+            }
+
+            // Debounce: espera 300ms a que dejes de escribir para no bombardear la base de datos
+            clearTimeout(timeoutBuscador);
+            timeoutBuscador = setTimeout(async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
+                    if (!res.ok) return;
+                    const coincidencias = await res.json();
+                    
+                    coincidencias.forEach(empresa => {
+                        const item = document.createElement("div");
+                        item.innerHTML = `<span>${corregirCodificacion(empresa.razon_social)}</span> <span class="item-ruc">${empresa.ruc}</span>`;
+                        
+                        item.addEventListener("click", function() {
+                            input.value = corregirCodificacion(empresa.razon_social);
+                            rucSeleccionado = empresa.ruc;
+                            list.innerHTML = '';
+                            consultarEmpresa(rucSeleccionado); // Ejecuta la consulta automáticamente
+                        });
+                        list.appendChild(item);
+                    });
+                } catch (err) {
+                    console.error("Error en búsqueda:", err);
+                }
+            }, 300);
+        });
+
+        // Cierra la lista si haces clic afuera
+        document.addEventListener("click", function (e) {
+            if (e.target !== input) list.innerHTML = '';
+        });
+
+        function ejecutarConsultaManual() {
+            // Si escribió algo y no seleccionó la lista, usamos lo que haya escrito asumiendo que pegó el RUC
+            const target = rucSeleccionado || input.value.trim(); 
+            if(target) consultarEmpresa(target);
+        }
+
+        // LÓGICA ORIGINAL DE OBTENCIÓN DE DATOS
+        async function consultarEmpresa(ruc) {
             document.getElementById('perfilCard').style.display = 'none';
             document.getElementById('finanzasCard').style.display = 'none';
 
@@ -164,7 +212,6 @@
 
         function renderizarPerfil(data) {
             document.getElementById('perfilCard').style.display = 'block';
-            
             const sri = data.sri || {};
             const dir = data.directorio || {};
 
@@ -178,10 +225,7 @@
             document.getElementById('lblRuc').innerText = sri.numero_ruc || dir.ruc || 'N/A';
             document.getElementById('lblExpediente').innerText = dir.expediente || 'N/A';
             
-            // Tipo de la tabla DIRECTORIO_COMPLETO
             document.getElementById('lblTipo').innerText = corregirCodificacion(dir.tipo || 'N/A');
-            
-            // Diccionario para clase contribuyente
             const claseRaw = sri.clase_contribuyente ? sri.clase_contribuyente.trim() : '';
             document.getElementById('lblClase').innerText = corregirCodificacion(dicClase[claseRaw] || claseRaw || 'N/A');
             
