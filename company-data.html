@@ -386,29 +386,30 @@
                 }
             });
 
-            // 5. Gráfico: Rentabilidad con EJE DOBLE (Ignorando ceros)
+            // 5. Gráfico: Rentabilidad (Recorte independiente de años vacíos)
+            let idxMargen = historico.findIndex(d => parseFloat(d.margen_bruto) || parseFloat(d.margen_operacional));
+            let histMargen = idxMargen !== -1 ? historico.slice(idxMargen) : historico;
+
             chartMargenes = new Chart(document.getElementById('graficoMargenes').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: anios,
+                    labels: histMargen.map(d => d.anio), // Eje X recortado
                     datasets: [
                         { 
                             label: 'Margen Bruto %', 
-                            // Si es 0, lo convierte en null para que no dibuje la línea plana
-                            data: historico.map(d => parseFloat(d.margen_bruto) ? parseFloat(d.margen_bruto) * 100 : null), 
+                            data: histMargen.map(d => parseFloat(d.margen_bruto) ? parseFloat(d.margen_bruto) * 100 : null), 
                             borderColor: '#10b981', tension: 0.1, yAxisID: 'y', spanGaps: true
                         },
                         { 
                             label: 'Margen Operacional %', 
-                            data: historico.map(d => parseFloat(d.margen_operacional) ? parseFloat(d.margen_operacional) * 100 : null), 
+                            data: histMargen.map(d => parseFloat(d.margen_operacional) ? parseFloat(d.margen_operacional) * 100 : null), 
                             borderColor: '#f59e0b', tension: 0.1, yAxisID: 'y1', spanGaps: true
                         },
                         { 
                             label: 'Margen Neto %', 
-                            data: historico.map(d => {
+                            data: histMargen.map(d => {
                                 const v = parseFloat(d.ingresos_ventas) || 0;
                                 const u = parseFloat(d.utilidad_neta) || 0;
-                                // Solo calcula si hay ventas reales, sino devuelve null
                                 return v !== 0 ? (u / v) * 100 : null;
                             }), 
                             borderColor: '#6366f1', tension: 0.1, yAxisID: 'y1', spanGaps: true
@@ -442,21 +443,23 @@
                 }
             });
 
-            // 7. Gráfico: Ciclo Operativo con EJE DOBLE (Ignorando ceros)
+            // 7. Gráfico: Ciclo Operativo (Recorte independiente de años vacíos)
+            let idxCiclo = historico.findIndex(d => parseFloat(d.per_med_cobranza) || parseFloat(d.per_med_pago));
+            let histCiclo = idxCiclo !== -1 ? historico.slice(idxCiclo) : historico;
+
             chartCiclo = new Chart(document.getElementById('graficoCiclo').getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: anios,
+                    labels: histCiclo.map(d => d.anio), // Eje X recortado
                     datasets: [
                         { 
                             label: 'Días Promedio Cobro', 
-                            // Reemplaza 0 por null para no dibujar barras vacías
-                            data: historico.map(d => parseFloat(d.per_med_cobranza) || null), 
+                            data: histCiclo.map(d => parseFloat(d.per_med_cobranza) || null), 
                             backgroundColor: '#0ea5e9', yAxisID: 'y' 
                         },
                         { 
                             label: 'Días Promedio Pago', 
-                            data: historico.map(d => parseFloat(d.per_med_pago) || null), 
+                            data: histCiclo.map(d => parseFloat(d.per_med_pago) || null), 
                             backgroundColor: '#64748b', yAxisID: 'y1' 
                         }
                     ]
