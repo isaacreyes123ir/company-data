@@ -386,22 +386,29 @@
                 }
             });
 
-            // 5. Gráfico: Evolución de Márgenes (Calculados en Vivo con validación)
-            let idxMargen = historico.findIndex(d => parseFloat(d.ingresos_ventas) > 1);
+            // 5. Gráfico: Evolución de Márgenes (Validado y con recorte estricto del Eje X)
+            
+            // Encuentra el primer año donde haya Ventas Y (Costos o Utilidad) para poder calcular algo
+            let idxMargen = historico.findIndex(d => {
+                const v = parseFloat(d.ingresos_ventas);
+                const cv = parseFloat(d.costos_ventas_prod);
+                const hasUtilidad = d.utilidad_neta != null && d.utilidad_neta !== "";
+                return v && (cv || hasUtilidad);
+            });
+            
+            // Recortamos el historial desde ese año específico
             let histMargen = idxMargen !== -1 ? historico.slice(idxMargen) : historico;
 
             chartMargenes = new Chart(document.getElementById('graficoMargenes').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: histMargen.map(d => d.anio),
+                    labels: histMargen.map(d => d.anio), // El Eje X ahora está perfectamente recortado
                     datasets: [
                         { 
                             label: 'Margen Bruto %', 
                             data: histMargen.map(d => {
                                 const v = parseFloat(d.ingresos_ventas);
                                 const cv = parseFloat(d.costos_ventas_prod);
-                                
-                                // Si ventas o costos son 0, vacíos o nulos, anula el cálculo
                                 if (!v || !cv) return null;
                                 return ((v - cv) / v) * 100;
                             }), 
@@ -413,8 +420,6 @@
                                 const v = parseFloat(d.ingresos_ventas);
                                 const cv = parseFloat(d.costos_ventas_prod);
                                 const ga = parseFloat(d.gastos_admin_ventas);
-                                
-                                // Si falta alguno de los 3 valores, anula el cálculo
                                 if (!v || !cv || !ga) return null;
                                 return (((v - cv) - ga) / v) * 100;
                             }), 
@@ -424,8 +429,6 @@
                             label: 'Margen Neto %', 
                             data: histMargen.map(d => {
                                 const v = parseFloat(d.ingresos_ventas);
-                                
-                                // Anula si no hay ventas o si la utilidad está totalmente vacía
                                 if (!v || d.utilidad_neta == null || d.utilidad_neta === "") return null;
                                 const u = parseFloat(d.utilidad_neta);
                                 return (u / v) * 100;
