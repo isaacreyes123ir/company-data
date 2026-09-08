@@ -361,8 +361,10 @@
             if (chartEvolucion) chartEvolucion.destroy();
             if (chartMargenes) chartMargenes.destroy();
             if (chartEstructura) chartEstructura.destroy();
-            if (chartCiclo) chartCiclo.destroy();
-
+            if (chartLiquidez) chartLiquidez.destroy();
+            if (chartSolvencia) chartSolvencia.destroy();
+            if (chartGestion) chartGestion.destroy();
+            
             // 4. Gráfico: Evolución con EJE DOBLE
             chartEvolucion = new Chart(document.getElementById('graficoEvolucion').getContext('2d'), {
                 type: 'line',
