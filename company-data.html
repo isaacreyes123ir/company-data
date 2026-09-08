@@ -83,6 +83,7 @@
                 <h2 id="lblRazonSocial">Cargando...</h2>
                 <span id="lblEstadoSRI" class="badge badge-sri">SRI</span>
                 <span id="lblEstadoSuper" class="badge badge-super">SUPERCIAS</span>
+                <span id="lblProveedor" class="badge" style="display:none;"></span>
             </div>
             <div class="header-grid">
                 <div>
@@ -579,5 +580,14 @@
             });
         }
     </script>
+
+    <div id="modalSercop" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('modalSercop').style.display='none'">&times;</span>
+            <h3 style="margin-top:0;">Resumen de Contratos con el Estado</h3>
+            <div id="modalSercopBody"></div>
+        </div>
+    </div>
+    
 </body>
 </html>
