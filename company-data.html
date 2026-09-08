@@ -243,15 +243,17 @@
                 if (!resPerfil.ok) return;
                 const perfil = await resPerfil.json();
                 
-                let finanzas = null;
+                let finanzas = null, sercop = null;
                 const expediente = perfil.directorio ? perfil.directorio.expediente : null;
                 if (expediente) {
                     const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
-                    if (resFinanzas.ok) {
-                        finanzas = await resFinanzas.json();
-                    }
+                    if (resFinanzas.ok) finanzas = await resFinanzas.json();
                 }
-                datosPrecargados = { ruc: ruc, perfil: perfil, finanzas: finanzas };
+                
+                const resSercop = await fetch(`${API_BASE}/compras-publicas/${ruc}`);
+                if (resSercop.ok) sercop = await resSercop.json();
+
+                datosPrecargados = { ruc: ruc, perfil: perfil, finanzas: finanzas, sercop: sercop };
             } catch (error) {
                 console.error('Error en precarga:', error);
             }
@@ -263,9 +265,8 @@
 
             if (datosPrecargados && datosPrecargados.ruc === target) {
                 renderizarPerfil(datosPrecargados.perfil);
-                if (datosPrecargados.finanzas) {
-                    renderizarFinanzas(datosPrecargados.finanzas);
-                }
+                renderizarSercop(datosPrecargados.sercop);
+                if (datosPrecargados.finanzas) renderizarFinanzas(datosPrecargados.finanzas);
             } else {
                 consultarEmpresa(target);
             }
@@ -274,21 +275,21 @@
         async function consultarEmpresa(ruc) {
             document.getElementById('perfilCard').style.display = 'none';
             document.getElementById('finanzasCard').style.display = 'none';
+            document.getElementById('lblProveedor').style.display = 'none';
 
             try {
                 const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
                 if (!resPerfil.ok) throw new Error('Empresa no encontrada.');
                 const perfil = await resPerfil.json();
-                
                 renderizarPerfil(perfil);
+
+                const resSercop = await fetch(`${API_BASE}/compras-publicas/${ruc}`);
+                if (resSercop.ok) renderizarSercop(await resSercop.json());
 
                 const expediente = perfil.directorio ? perfil.directorio.expediente : null;
                 if (expediente) {
                     const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
-                    if (resFinanzas.ok) {
-                        const finanzas = await resFinanzas.json();
-                        renderizarFinanzas(finanzas);
-                    }
+                    if (resFinanzas.ok) renderizarFinanzas(await resFinanzas.json());
                 }
             } catch (error) {
                 alert('Error: ' + error.message);
