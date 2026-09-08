@@ -336,8 +336,8 @@
             document.getElementById('valProductividad').innerText = usd.format(productividad);
             document.getElementById('valCobertura').innerText = actual.cobertura_interes != null ? actual.cobertura_interes.toFixed(2) : 'N/A';
 
-            // 2. Llenar Modelo DuPont
-            document.getElementById('dpMargen').innerText = `${(actual.rent_neta_ventas * 100).toFixed(1)}%`;
+            // 2. Llenar Modelo DuPont (Margen Neto con 2 decimales)
+            document.getElementById('dpMargen').innerText = `${(actual.rent_neta_ventas * 100).toFixed(2)}%`;
             document.getElementById('dpRotacion').innerText = actual.rot_ventas.toFixed(2);
             document.getElementById('dpApalancamiento').innerText = actual.apalancamiento.toFixed(2);
             document.getElementById('dpRoe').innerText = `${(actual.roe * 100).toFixed(1)}%`;
@@ -348,34 +348,48 @@
             if (chartEstructura) chartEstructura.destroy();
             if (chartCiclo) chartCiclo.destroy();
 
-            // 3. Gráfico: Evolución de Ingresos y Utilidad
+            // 3. Gráfico: Evolución con EJE DOBLE (Ventas a la izq, Utilidad a la der)
             chartEvolucion = new Chart(document.getElementById('graficoEvolucion').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: 'Ingresos Ventas', data: historico.map(d => d.ingresos_ventas), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1 },
-                        { label: 'Utilidad Neta', data: historico.map(d => d.utilidad_neta), borderColor: '#dc2626', backgroundColor: '#dc2626', tension: 0.1 }
+                        { label: 'Ingresos Ventas', data: historico.map(d => d.ingresos_ventas), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1, yAxisID: 'y' },
+                        { label: 'Utilidad Neta', data: historico.map(d => d.utilidad_neta), borderColor: '#dc2626', backgroundColor: '#dc2626', tension: 0.1, yAxisID: 'y1' }
                     ]
                 },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Volumen: Ingresos y Utilidad' } } }
+                options: { 
+                    responsive: true, 
+                    plugins: { title: { display: true, text: 'Volumen: Ingresos vs Utilidad' } },
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Ingresos ($)' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Utilidad ($)' }, grid: { drawOnChartArea: false } }
+                    }
+                }
             });
 
-            // 4. Gráfico: Rentabilidad y Márgenes
+            // 4. Gráfico: Rentabilidad con EJE DOBLE (Bruto a la izq, Op/Neto a la der)
             chartMargenes = new Chart(document.getElementById('graficoMargenes').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: 'Margen Bruto %', data: historico.map(d => d.margen_bruto * 100), borderColor: '#10b981', tension: 0.1 },
-                        { label: 'Margen Operacional %', data: historico.map(d => d.margen_operacional * 100), borderColor: '#f59e0b', tension: 0.1 },
-                        { label: 'Margen Neto %', data: historico.map(d => d.rent_neta_ventas * 100), borderColor: '#6366f1', tension: 0.1 }
+                        { label: 'Margen Bruto %', data: historico.map(d => d.margen_bruto * 100), borderColor: '#10b981', tension: 0.1, yAxisID: 'y' },
+                        { label: 'Margen Operacional %', data: historico.map(d => d.margen_operacional * 100), borderColor: '#f59e0b', tension: 0.1, yAxisID: 'y1' },
+                        { label: 'Margen Neto %', data: historico.map(d => d.rent_neta_ventas * 100), borderColor: '#6366f1', tension: 0.1, yAxisID: 'y1' }
                     ]
                 },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Rentabilidad: Evolución de Márgenes' } } }
+                options: { 
+                    responsive: true, 
+                    plugins: { title: { display: true, text: 'Rentabilidad: Evolución de Márgenes' } },
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'M. Bruto (%)' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'M. Op / Neto (%)' }, grid: { drawOnChartArea: false } }
+                    }
+                }
             });
 
-            // 5. Gráfico: Estructura de Capital (Deuda vs Patrimonio)
+            // 5. Gráfico: Estructura de Capital (Este se mantiene normal porque es 100% apilado)
             chartEstructura = new Chart(document.getElementById('graficoEstructura').getContext('2d'), {
                 type: 'bar',
                 data: {
@@ -392,17 +406,24 @@
                 }
             });
 
-            // 6. Gráfico: Ciclo Operativo (Días)
+            // 6. Gráfico: Ciclo Operativo con EJE DOBLE (Cobro a la izq, Pago a la der)
             chartCiclo = new Chart(document.getElementById('graficoCiclo').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: 'Días Promedio Cobro', data: historico.map(d => d.per_med_cobranza), backgroundColor: '#0ea5e9' },
-                        { label: 'Días Promedio Pago', data: historico.map(d => d.per_med_pago), backgroundColor: '#64748b' }
+                        { label: 'Días Promedio Cobro', data: historico.map(d => d.per_med_cobranza), backgroundColor: '#0ea5e9', yAxisID: 'y' },
+                        { label: 'Días Promedio Pago', data: historico.map(d => d.per_med_pago), backgroundColor: '#64748b', yAxisID: 'y1' }
                     ]
                 },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Eficiencia: Ciclo de Caja (Días)' } } }
+                options: { 
+                    responsive: true, 
+                    plugins: { title: { display: true, text: 'Eficiencia: Ciclo de Caja (Días)' } },
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Días Cobro' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Días Pago' }, grid: { drawOnChartArea: false } }
+                    }
+                }
             });
         }
     </script>
