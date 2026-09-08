@@ -386,15 +386,33 @@
                 }
             });
 
-            // 5. Gráfico: Rentabilidad con EJE DOBLE
+            // 5. Gráfico: Rentabilidad con EJE DOBLE (Ignorando ceros)
             chartMargenes = new Chart(document.getElementById('graficoMargenes').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: 'Margen Bruto %', data: historico.map(d => d.margen_bruto * 100), borderColor: '#10b981', tension: 0.1, yAxisID: 'y' },
-                        { label: 'Margen Operacional %', data: historico.map(d => d.margen_operacional * 100), borderColor: '#f59e0b', tension: 0.1, yAxisID: 'y1' },
-                        { label: 'Margen Neto %', data: historico.map(d => (d.ingresos_ventas !== 0 ? (d.utilidad_neta / d.ingresos_ventas) : 0) * 100), borderColor: '#6366f1', tension: 0.1, yAxisID: 'y1' }
+                        { 
+                            label: 'Margen Bruto %', 
+                            // Si es 0, lo convierte en null para que no dibuje la línea plana
+                            data: historico.map(d => parseFloat(d.margen_bruto) ? parseFloat(d.margen_bruto) * 100 : null), 
+                            borderColor: '#10b981', tension: 0.1, yAxisID: 'y', spanGaps: true
+                        },
+                        { 
+                            label: 'Margen Operacional %', 
+                            data: historico.map(d => parseFloat(d.margen_operacional) ? parseFloat(d.margen_operacional) * 100 : null), 
+                            borderColor: '#f59e0b', tension: 0.1, yAxisID: 'y1', spanGaps: true
+                        },
+                        { 
+                            label: 'Margen Neto %', 
+                            data: historico.map(d => {
+                                const v = parseFloat(d.ingresos_ventas) || 0;
+                                const u = parseFloat(d.utilidad_neta) || 0;
+                                // Solo calcula si hay ventas reales, sino devuelve null
+                                return v !== 0 ? (u / v) * 100 : null;
+                            }), 
+                            borderColor: '#6366f1', tension: 0.1, yAxisID: 'y1', spanGaps: true
+                        }
                     ]
                 },
                 options: { 
@@ -424,14 +442,23 @@
                 }
             });
 
-            // 7. Gráfico: Ciclo Operativo con EJE DOBLE
+            // 7. Gráfico: Ciclo Operativo con EJE DOBLE (Ignorando ceros)
             chartCiclo = new Chart(document.getElementById('graficoCiclo').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: 'Días Promedio Cobro', data: historico.map(d => d.per_med_cobranza), backgroundColor: '#0ea5e9', yAxisID: 'y' },
-                        { label: 'Días Promedio Pago', data: historico.map(d => d.per_med_pago), backgroundColor: '#64748b', yAxisID: 'y1' }
+                        { 
+                            label: 'Días Promedio Cobro', 
+                            // Reemplaza 0 por null para no dibujar barras vacías
+                            data: historico.map(d => parseFloat(d.per_med_cobranza) || null), 
+                            backgroundColor: '#0ea5e9', yAxisID: 'y' 
+                        },
+                        { 
+                            label: 'Días Promedio Pago', 
+                            data: historico.map(d => parseFloat(d.per_med_pago) || null), 
+                            backgroundColor: '#64748b', yAxisID: 'y1' 
+                        }
                     ]
                 },
                 options: { 
