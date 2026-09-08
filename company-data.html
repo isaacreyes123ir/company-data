@@ -273,26 +273,49 @@
         }
 
         async function consultarEmpresa(ruc) {
+            // Ocultar tarjetas y preparar el botón Sercop en modo "Cargando"
             document.getElementById('perfilCard').style.display = 'none';
             document.getElementById('finanzasCard').style.display = 'none';
-            document.getElementById('lblProveedor').style.display = 'none';
+            
+            const badge = document.getElementById('lblProveedor');
+            badge.style.display = 'inline-block';
+            badge.className = 'badge badge-no-proveedor';
+            badge.innerText = 'Consultando SERCOP...';
+            badge.onclick = null;
 
             try {
+                // 1. OBTENER Y MOSTRAR PERFIL INMEDIATAMENTE
                 const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
                 if (!resPerfil.ok) throw new Error('Empresa no encontrada.');
                 const perfil = await resPerfil.json();
-                renderizarPerfil(perfil);
+                
+                renderizarPerfil(perfil); // Se muestra la tarjeta superior al instante
 
-                const resSercop = await fetch(`${API_BASE}/compras-publicas/${ruc}`);
-                if (resSercop.ok) renderizarSercop(await resSercop.json());
-
+                // 2. DISPARAR FINANZAS EN SEGUNDO PLANO (No bloquea la página)
                 const expediente = perfil.directorio ? perfil.directorio.expediente : null;
                 if (expediente) {
-                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
-                    if (resFinanzas.ok) renderizarFinanzas(await resFinanzas.json());
+                    fetch(`${API_BASE}/finanzas/${expediente}`)
+                        .then(res => res.ok ? res.json() : null)
+                        .then(finanzas => {
+                            if (finanzas) renderizarFinanzas(finanzas);
+                        })
+                        .catch(error => console.error('Error Finanzas:', error));
                 }
+
+                // 3. DISPARAR SERCOP EN SEGUNDO PLANO (No bloquea la página)
+                fetch(`${API_BASE}/compras-publicas/${ruc}`)
+                    .then(res => res.ok ? res.json() : null)
+                    .then(sercop => {
+                        renderizarSercop(sercop);
+                    })
+                    .catch(error => {
+                        console.error('Error Sercop:', error);
+                        badge.style.display = 'none'; // Si falla, lo oculta
+                    });
+
             } catch (error) {
                 alert('Error: ' + error.message);
+                badge.style.display = 'none';
             }
         }
 
