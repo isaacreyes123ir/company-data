@@ -322,33 +322,51 @@
             if(!data.datos || data.datos.length === 0) return;
             document.getElementById('finanzasCard').style.display = 'block';
             
-            const actual = data.datos[0];
-            const historico = [...data.datos].reverse(); // Orden cronológico para gráficos
+            // 1. Filtrar años en blanco o en 0 al inicio del historial
+            const historicoCrudo = [...data.datos].reverse();
+            let startIdx = 0;
+            for (let i = 0; i < historicoCrudo.length; i++) {
+                if (historicoCrudo[i].activos > 0 || historicoCrudo[i].ingresos_ventas > 0) {
+                    startIdx = i;
+                    break;
+                }
+            }
+            const historico = historicoCrudo.slice(startIdx); // Corta la matriz desde el primer dato real
             const anios = historico.map(d => d.anio);
-
-            // 1. Llenar Métricas Clave
+            const actual = data.datos[0]; // El dato más reciente sigue siendo el índice 0 original
+            
+            // 2. Llenar Métricas Clave
             document.getElementById('valIngresos').innerText = usd.format(actual.ingresos_ventas);
             document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
             document.getElementById('valEmpleados').innerText = actual.n_empleados || '0';
             
-            // Cálculos
             const productividad = actual.n_empleados > 0 ? (actual.ingresos_ventas / actual.n_empleados) : 0;
             document.getElementById('valProductividad').innerText = usd.format(productividad);
             document.getElementById('valCobertura').innerText = actual.cobertura_interes != null ? actual.cobertura_interes.toFixed(2) : 'N/A';
 
-            // 2. Llenar Modelo DuPont (Margen Neto con 2 decimales)
-            document.getElementById('dpMargen').innerText = `${(actual.rent_neta_ventas * 100).toFixed(2)}%`;
-            document.getElementById('dpRotacion').innerText = actual.rot_ventas.toFixed(2);
-            document.getElementById('dpApalancamiento').innerText = actual.apalancamiento.toFixed(2);
-            document.getElementById('dpRoe').innerText = `${(actual.roe * 100).toFixed(1)}%`;
+            // 3. Cálculo en vivo del Modelo DuPont
+            const ventas = actual.ingresos_ventas || 0;
+            const utilidad = actual.utilidad_neta || 0;
+            const activos = actual.activos || 0;
+            const patrimonio = actual.patrimonio || 0;
 
-            // Destruir gráficos anteriores para evitar superposiciones
+            const margen = ventas !== 0 ? (utilidad / ventas) : 0;
+            const rotacion = activos !== 0 ? (ventas / activos) : 0;
+            const apalancamiento = patrimonio !== 0 ? (activos / patrimonio) : 0;
+            const roeVivo = patrimonio !== 0 ? (utilidad / patrimonio) : 0;
+
+            document.getElementById('dpMargen').innerText = `${(margen * 100).toFixed(2)}%`;
+            document.getElementById('dpRotacion').innerText = rotacion.toFixed(2);
+            document.getElementById('dpApalancamiento').innerText = apalancamiento.toFixed(2);
+            document.getElementById('dpRoe').innerText = `${(roeVivo * 100).toFixed(1)}%`;
+
+            // Destruir gráficos anteriores
             if (chartEvolucion) chartEvolucion.destroy();
             if (chartMargenes) chartMargenes.destroy();
             if (chartEstructura) chartEstructura.destroy();
             if (chartCiclo) chartCiclo.destroy();
 
-            // 3. Gráfico: Evolución con EJE DOBLE (Ventas a la izq, Utilidad a la der)
+            // 4. Gráfico: Evolución con EJE DOBLE
             chartEvolucion = new Chart(document.getElementById('graficoEvolucion').getContext('2d'), {
                 type: 'line',
                 data: {
@@ -368,7 +386,7 @@
                 }
             });
 
-            // 4. Gráfico: Rentabilidad con EJE DOBLE (Bruto a la izq, Op/Neto a la der)
+            // 5. Gráfico: Rentabilidad con EJE DOBLE
             chartMargenes = new Chart(document.getElementById('graficoMargenes').getContext('2d'), {
                 type: 'line',
                 data: {
@@ -376,7 +394,7 @@
                     datasets: [
                         { label: 'Margen Bruto %', data: historico.map(d => d.margen_bruto * 100), borderColor: '#10b981', tension: 0.1, yAxisID: 'y' },
                         { label: 'Margen Operacional %', data: historico.map(d => d.margen_operacional * 100), borderColor: '#f59e0b', tension: 0.1, yAxisID: 'y1' },
-                        { label: 'Margen Neto %', data: historico.map(d => d.rent_neta_ventas * 100), borderColor: '#6366f1', tension: 0.1, yAxisID: 'y1' }
+                        { label: 'Margen Neto %', data: historico.map(d => (d.ingresos_ventas !== 0 ? (d.utilidad_neta / d.ingresos_ventas) : 0) * 100), borderColor: '#6366f1', tension: 0.1, yAxisID: 'y1' }
                     ]
                 },
                 options: { 
@@ -389,14 +407,14 @@
                 }
             });
 
-            // 5. Gráfico: Estructura de Capital (Este se mantiene normal porque es 100% apilado)
+            // 6. Gráfico: Estructura de Capital
             chartEstructura = new Chart(document.getElementById('graficoEstructura').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: '% Financiado con Deuda', data: historico.map(d => d.end_activo * 100), backgroundColor: '#ef4444' },
-                        { label: '% Financiado por Dueños', data: historico.map(d => d.fortaleza_patrimonial * 100), backgroundColor: '#3b82f6' }
+                        { label: '% Financiado con Deuda', data: historico.map(d => d.activos !== 0 ? ((d.activos - d.patrimonio) / d.activos) * 100 : 0), backgroundColor: '#ef4444' },
+                        { label: '% Financiado por Dueños', data: historico.map(d => d.activos !== 0 ? (d.patrimonio / d.activos) * 100 : 0), backgroundColor: '#3b82f6' }
                     ]
                 },
                 options: { 
@@ -406,7 +424,7 @@
                 }
             });
 
-            // 6. Gráfico: Ciclo Operativo con EJE DOBLE (Cobro a la izq, Pago a la der)
+            // 7. Gráfico: Ciclo Operativo con EJE DOBLE
             chartCiclo = new Chart(document.getElementById('graficoCiclo').getContext('2d'), {
                 type: 'bar',
                 data: {
