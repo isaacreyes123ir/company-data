@@ -472,34 +472,98 @@
                 }
             });
 
-            // 7. Gráfico: Ciclo Operativo (Recorte independiente de años vacíos)
-            let idxCiclo = historico.findIndex(d => parseFloat(d.per_med_cobranza) || parseFloat(d.per_med_pago));
-            let histCiclo = idxCiclo !== -1 ? historico.slice(idxCiclo) : historico;
+            
 
-            chartCiclo = new Chart(document.getElementById('graficoCiclo').getContext('2d'), {
-                type: 'bar',
+            // 7. Gráfico: Ciclo Operativo (Recorte independiente de años vacíos)
+            // --- NUEVO: Gráfico de Liquidez ---
+            let idxLiq = historico.findIndex(d => parseFloat(d.liquidez_corriente) > 0);
+            let histLiq = idxLiq !== -1 ? historico.slice(idxLiq) : historico;
+
+            chartLiquidez = new Chart(document.getElementById('graficoLiquidez').getContext('2d'), {
+                type: 'line',
                 data: {
-                    labels: histCiclo.map(d => d.anio), // Eje X recortado
+                    labels: histLiq.map(d => d.anio),
                     datasets: [
                         { 
-                            label: 'Días Promedio Cobro', 
-                            data: histCiclo.map(d => parseFloat(d.per_med_cobranza) || null), 
-                            backgroundColor: '#0ea5e9', yAxisID: 'y' 
+                            label: 'Liquidez Corriente (Veces)', 
+                            data: histLiq.map(d => parseFloat(d.liquidez_corriente) || null), 
+                            borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: 0.2, spanGaps: true
                         },
                         { 
-                            label: 'Días Promedio Pago', 
-                            data: histCiclo.map(d => parseFloat(d.per_med_pago) || null), 
-                            backgroundColor: '#64748b', yAxisID: 'y1' 
+                            label: 'Prueba Ácida (Veces)', 
+                            data: histLiq.map(d => parseFloat(d.prueba_acida) || null), 
+                            borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', tension: 0.2, spanGaps: true
                         }
                     ]
                 },
                 options: { 
                     responsive: true, 
-                    plugins: { title: { display: true, text: 'Eficiencia: Ciclo de Caja (Días)' } },
-                    scales: {
-                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Días Cobro' } },
-                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Días Pago' }, grid: { drawOnChartArea: false } }
+                    plugins: { title: { display: true, text: 'Liquidez: Capacidad de Pago a Corto Plazo' } },
+                    scales: { y: { type: 'linear', title: { display: true, text: 'Veces' } } }
+                }
+            });
+
+            // --- NUEVO: Gráfico de Solvencia ---
+            let idxSolv = historico.findIndex(d => parseFloat(d.end_activo) > 0);
+            let histSolv = idxSolv !== -1 ? historico.slice(idxSolv) : historico;
+
+            chartSolvencia = new Chart(document.getElementById('graficoSolvencia').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: histSolv.map(d => d.anio),
+                    datasets: [
+                        { 
+                            label: 'Endeudamiento del Activo %', 
+                            data: histSolv.map(d => parseFloat(d.end_activo) ? parseFloat(d.end_activo) * 100 : null), 
+                            borderColor: '#ef4444', backgroundColor: '#ef4444', tension: 0.2, spanGaps: true, yAxisID: 'y'
+                        },
+                        { 
+                            label: 'Endeudamiento Patrimonial (Veces)', 
+                            data: histSolv.map(d => parseFloat(d.end_patrimonial) || null), 
+                            borderColor: '#f97316', backgroundColor: '#f97316', tension: 0.2, spanGaps: true, yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { title: { display: true, text: 'Solvencia: Nivel de Endeudamiento' } },
+                    scales: { 
+                        y: { type: 'linear', position: 'left', title: { display: true, text: '% del Activo' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Deuda / Patrimonio (Veces)' }, grid: { drawOnChartArea: false } }
                     }
+                }
+            });
+
+            // --- 7 NUEVO: Gráfico de Gestión (Rotaciones) ---
+            let idxGest = historico.findIndex(d => parseFloat(d.rot_ventas) > 0);
+            let histGest = idxGest !== -1 ? historico.slice(idxGest) : historico;
+
+            chartGestion = new Chart(document.getElementById('graficoGestion').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: histGest.map(d => d.anio),
+                    datasets: [
+                        { 
+                            label: 'Rotación de Cartera', 
+                            data: histGest.map(d => parseFloat(d.rot_cartera) || null), 
+                            borderColor: '#14b8a6', backgroundColor: '#14b8a6', tension: 0.2, spanGaps: true
+                        },
+                        { 
+                            label: 'Rotación Activo Fijo', 
+                            data: histGest.map(d => parseFloat(d.rot_activo_fijo) || null), 
+                            borderColor: '#f43f5e', backgroundColor: '#f43f5e', tension: 0.2, spanGaps: true
+                        },
+                        { 
+                            label: 'Rotación de Ventas (Activos)', 
+                            data: histGest.map(d => parseFloat(d.rot_ventas) || null), 
+                            borderColor: '#64748b', backgroundColor: '#64748b', tension: 0.2, borderDash: [5, 5], spanGaps: true
+                        }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { title: { display: true, text: 'Gestión: Eficiencia Operativa (Rotaciones al Año)' } },
+                    scales: { y: { type: 'linear', title: { display: true, text: 'Veces al Año' } } }
                 }
             });
         }
