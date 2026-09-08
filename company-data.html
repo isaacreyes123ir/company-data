@@ -262,14 +262,7 @@
         function ejecutarConsultaManual() {
             const target = rucSeleccionado || input.value.trim(); 
             if(!target) return;
-
-            if (datosPrecargados && datosPrecargados.ruc === target) {
-                renderizarPerfil(datosPrecargados.perfil);
-                renderizarSercop(datosPrecargados.sercop);
-                if (datosPrecargados.finanzas) renderizarFinanzas(datosPrecargados.finanzas);
-            } else {
-                consultarEmpresa(target);
-            }
+            consultarEmpresa(target);
         }
 
         async function consultarEmpresa(ruc) {
