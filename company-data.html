@@ -580,6 +580,55 @@
                 }
             });
         }
+        function renderizarSercop(data) {
+            const badge = document.getElementById('lblProveedor');
+            badge.style.display = 'inline-block';
+            
+            if (data && data.total_contratos > 0) {
+                badge.innerText = `PROVEEDOR DEL ESTADO (${data.total_contratos})`;
+                badge.className = 'badge badge-proveedor';
+                badge.onclick = () => abrirModalSercop(data.contratos);
+            } else {
+                badge.innerText = 'NO PROVEEDOR DEL ESTADO';
+                badge.className = 'badge badge-no-proveedor';
+                badge.onclick = null;
+            }
+        }
+
+        function abrirModalSercop(contratos) {
+            // Agrupar por año y entidad
+            const resumen = {};
+            contratos.forEach(c => {
+                const anio = c.fecha_firma ? c.fecha_firma.split('-')[0] : 'N/A';
+                const entidad = c.entidad_compradora || 'Entidad Desconocida';
+                
+                if (!resumen[anio]) resumen[anio] = {};
+                if (!resumen[anio][entidad]) resumen[anio][entidad] = { cantidad: 0, monto: 0 };
+                
+                resumen[anio][entidad].cantidad += 1;
+                resumen[anio][entidad].monto += parseFloat(c.monto_contrato) || 0;
+            });
+
+            // Generar tabla HTML
+            const anios = Object.keys(resumen).sort((a, b) => b - a); // Orden descendente
+            let html = '<table class="modal-table"><thead><tr><th>Año</th><th>Entidad Compradora</th><th>Contratos</th><th>Monto Total</th></tr></thead><tbody>';
+            
+            anios.forEach(anio => {
+                const entidades = Object.keys(resumen[anio]).sort((a, b) => resumen[anio][b].monto - resumen[anio][a].monto);
+                entidades.forEach((ent, index) => {
+                    html += `<tr>`;
+                    if (index === 0) html += `<td rowspan="${entidades.length}"><strong>${anio}</strong></td>`;
+                    html += `<td>${ent}</td>
+                             <td style="text-align:center">${resumen[anio][ent].cantidad}</td>
+                             <td style="text-align:right">${usd.format(resumen[anio][ent].monto)}</td>
+                             </tr>`;
+                });
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('modalSercopBody').innerHTML = html;
+            document.getElementById('modalSercop').style.display = 'flex';
+        }
     </script>
 
     <div id="modalSercop" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
