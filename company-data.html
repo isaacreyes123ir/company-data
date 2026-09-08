@@ -474,8 +474,7 @@
 
             
 
-            // 7. Gráfico: Ciclo Operativo (Recorte independiente de años vacíos)
-            // --- NUEVO: Gráfico de Liquidez ---
+            // --- 7 NUEVO: Gráfico de Liquidez ---
             let idxLiq = historico.findIndex(d => parseFloat(d.liquidez_corriente) > 0);
             let histLiq = idxLiq !== -1 ? historico.slice(idxLiq) : historico;
 
@@ -503,7 +502,7 @@
                 }
             });
 
-            // --- NUEVO: Gráfico de Solvencia ---
+            // --- 8 NUEVO: Gráfico de Solvencia ---
             let idxSolv = historico.findIndex(d => parseFloat(d.end_activo) > 0);
             let histSolv = idxSolv !== -1 ? historico.slice(idxSolv) : historico;
 
@@ -534,7 +533,7 @@
                 }
             });
 
-            // --- 7 NUEVO: Gráfico de Gestión (Rotaciones) ---
+            // --- 9 NUEVO: Gráfico de Gestión (Rotaciones) ---
             let idxGest = historico.findIndex(d => parseFloat(d.rot_ventas) > 0);
             let histGest = idxGest !== -1 ? historico.slice(idxGest) : historico;
 
