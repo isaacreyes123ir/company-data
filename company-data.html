@@ -9,7 +9,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 98%; margin: 0 auto; }
         
-        /* Contenedor del Buscador y Autocompletado */
+        /* Buscador */
         .search-container { position: relative; display: flex; gap: 10px; margin-bottom: 20px; }
         .autocomplete-wrapper { position: relative; flex: 1; }
         input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
@@ -21,36 +21,51 @@
         .autocomplete-items div:hover { background-color: #e9e9e9; }
         .item-ruc { color: #64748b; font-weight: bold; }
         
+        /* Tarjetas */
         .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .header-title { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px; }
         .header-title h2 { margin: 0 0 10px 0; color: #0f172a; font-size: 1.5em; text-transform: uppercase; }
         .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #fff; margin-right: 5px; display: inline-block; }
         .badge-sri { background-color: #059669; } 
         .badge-super { background-color: #2563eb; } 
+        
         .header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 0.9em; }
         .header-grid div p { margin: 6px 0; color: #475569; }
         .header-grid strong { color: #1e293b; }
         .activity-box { margin-top: 15px; padding: 15px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9em; line-height: 1.5;}
-        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        .metric-box { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .metric-box h4 { margin: 0 0 10px 0; font-size: 0.85em; color: #64748b; text-transform: uppercase; }
-        .metric-box p { margin: 0; font-size: 1.4em; font-weight: bold; color: #0f172a; }
-        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } .search-container { flex-direction: column; } }
+        
+        /* Finanzas: Métricas */
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+        .metric-box { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; text-align: center;}
+        .metric-box h4 { margin: 0 0 8px 0; font-size: 0.8em; color: #64748b; text-transform: uppercase; }
+        .metric-box p { margin: 0; font-size: 1.3em; font-weight: bold; color: #0f172a; }
+        
+        /* Finanzas: Modelo DuPont */
+        .dupont-title { text-align: center; color: #0f172a; font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;}
+        .dupont-container { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; background-color: #f1f5f9;}
+        .dp-box { background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; text-align: center; min-width: 120px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
+        .dp-box span { display: block; font-size: 1.4em; font-weight: bold; margin-top: 5px; color: #2563eb;}
+        .dp-operator { font-size: 1.5em; font-weight: bold; color: #94a3b8; }
+        .dp-result { background: #1e293b; color: white; border-color: #0f172a; }
+        .dp-result span { color: #38bdf8; }
+
+        /* Gráficos */
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;}
+        @media (max-width: 900px) { .charts-container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Buscador con Autocompletado -->
+        <!-- Buscador -->
         <div class="search-container">
             <div class="autocomplete-wrapper">
                 <input type="text" id="searchInput" placeholder="Escriba el nombre de la empresa o el RUC..." autocomplete="off">
                 <div id="autocompleteList" class="autocomplete-items"></div>
             </div>
-            <!-- Botón oculto, la búsqueda se dispara al seleccionar en la lista, pero se deja por si el usuario pega el RUC exacto -->
             <button onclick="ejecutarConsultaManual()">Consultar Datos</button>
         </div>
 
+        <!-- Tarjeta de Perfil -->
         <div id="perfilCard" class="card" style="display: none;">
             <div class="header-title">
                 <h2 id="lblRazonSocial">Cargando...</h2>
@@ -83,7 +98,10 @@
             </div>
         </div>
 
+        <!-- Inteligencia Financiera -->
         <div id="finanzasCard" style="display: none;">
+            
+            <!-- Resumen de Métricas Clave -->
             <div class="card metrics">
                 <div class="metric-box">
                     <h4>Ingresos Ventas</h4>
@@ -94,35 +112,64 @@
                     <p id="valUtilidad">$0</p>
                 </div>
                 <div class="metric-box">
-                    <h4>ROE</h4>
-                    <p id="valRoe">0% / 0%</p>
-                </div>
-                <div class="metric-box">
-                    <h4>Apalancamiento</h4>
-                    <p id="valApalancamiento">0</p>
-                </div>
-                <div class="metric-box">
                     <h4>Nº Empleados</h4>
                     <p id="valEmpleados">0</p>
                 </div>
+                <div class="metric-box">
+                    <h4>Productividad (Venta/Emp)</h4>
+                    <p id="valProductividad">$0</p>
+                </div>
+                <div class="metric-box">
+                    <h4>Cobertura Interés</h4>
+                    <p id="valCobertura">0</p>
+                </div>
             </div>
+
+            <!-- Modelo DuPont -->
+            <div class="card">
+                <h3 class="dupont-title">Desglose de Rentabilidad - Modelo DuPont (Último Año)</h3>
+                <div class="dupont-container">
+                    <div class="dp-box">Margen Neto <span id="dpMargen">0%</span></div>
+                    <div class="dp-operator">×</div>
+                    <div class="dp-box">Rotación Activos <span id="dpRotacion">0.0</span></div>
+                    <div class="dp-operator">×</div>
+                    <div class="dp-box">Apalancamiento <span id="dpApalancamiento">0.0</span></div>
+                    <div class="dp-operator">=</div>
+                    <div class="dp-box dp-result">ROE (Accionista) <span id="dpRoe">0%</span></div>
+                </div>
+            </div>
+
+            <!-- Gráficos Analíticos -->
             <div class="charts-container">
                 <div class="card">
                     <canvas id="graficoEvolucion"></canvas>
                 </div>
                 <div class="card">
-                    <canvas id="graficoLiquidez"></canvas>
+                    <canvas id="graficoMargenes"></canvas>
+                </div>
+                <div class="card">
+                    <canvas id="graficoEstructura"></canvas>
+                </div>
+                <div class="card">
+                    <canvas id="graficoCiclo"></canvas>
                 </div>
             </div>
+            
         </div>
     </div>
 
     <script>
         const API_BASE = "https://company-data.duckdns.org/api/v1";
+        
+        // Variables de gráficos
         let chartEvolucion = null;
-        let chartLiquidez = null;
+        let chartMargenes = null;
+        let chartEstructura = null;
+        let chartCiclo = null;
+        
         let rucSeleccionado = ""; 
         let datosPrecargados = null; 
+        
         const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
         const dicClase = {
@@ -136,7 +183,7 @@
             try { return decodeURIComponent(escape(texto)); } catch (e) { return texto; }
         }
 
-        // LÓGICA DEL BUSCADOR Y PRECARGA
+        // Buscador y Precarga
         const input = document.getElementById("searchInput");
         const list = document.getElementById("autocompleteList");
         let timeoutBuscador = null;
@@ -214,14 +261,13 @@
             }
         }
 
-        // RESPALDO: CONSULTA DIRECTA SI AÚN NO PRECARGA
         async function consultarEmpresa(ruc) {
             document.getElementById('perfilCard').style.display = 'none';
             document.getElementById('finanzasCard').style.display = 'none';
 
             try {
                 const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
-                if (!resPerfil.ok) throw new Error('Empresa no encontrada en registros.');
+                if (!resPerfil.ok) throw new Error('Empresa no encontrada.');
                 const perfil = await resPerfil.json();
                 
                 renderizarPerfil(perfil);
@@ -239,13 +285,12 @@
             }
         }
 
-        // RENDERIZADO DE DATOS
         function renderizarPerfil(data) {
             document.getElementById('perfilCard').style.display = 'block';
             const sri = data.sri || {};
             const dir = data.directorio || {};
 
-            document.getElementById('lblRazonSocial').innerText = corregirCodificacion(sri.razon_social || dir.nombre || 'Nombre no disponible');
+            document.getElementById('lblRazonSocial').innerText = corregirCodificacion(sri.razon_social || dir.nombre || 'N/A');
             document.getElementById('lblEstadoSRI').innerText = `SRI: ${sri.estado_contribuyente || 'N/A'}`;
             document.getElementById('lblEstadoSuper').innerText = `SUPERCIAS: ${dir.situacion_legal || 'N/A'}`;
             
@@ -254,7 +299,6 @@
 
             document.getElementById('lblRuc').innerText = sri.numero_ruc || dir.ruc || 'N/A';
             document.getElementById('lblExpediente').innerText = dir.expediente || 'N/A';
-            
             document.getElementById('lblTipo').innerText = corregirCodificacion(dir.tipo || 'N/A');
             const claseRaw = sri.clase_contribuyente ? sri.clase_contribuyente.trim() : '';
             document.getElementById('lblClase').innerText = corregirCodificacion(dicClase[claseRaw] || claseRaw || 'N/A');
@@ -265,10 +309,8 @@
             document.getElementById('lblTelefono').innerText = dir.telefono || 'N/A';
 
             const ubicacion = sri.descripcion_provincia_est ? `${sri.descripcion_provincia_est}, ${sri.descripcion_canton_est}` : (dir.provincia ? `${dir.provincia}, ${dir.canton}` : 'N/A');
-            const direccion = dir.calle ? `${dir.calle} y ${dir.interseccion || ''}` : 'N/A';
-            
             document.getElementById('lblUbicacion').innerText = corregirCodificacion(ubicacion);
-            document.getElementById('lblDireccion').innerText = corregirCodificacion(direccion);
+            document.getElementById('lblDireccion').innerText = corregirCodificacion(dir.calle ? `${dir.calle} y ${dir.interseccion || ''}` : 'N/A');
             document.getElementById('lblObligado').innerText = sri.obligado === 'S' ? 'SÍ' : (sri.obligado === 'N' ? 'NO' : 'N/A');
             document.getElementById('lblCapital').innerText = dir.capital_suscrito || '0.00';
             
@@ -281,42 +323,86 @@
             document.getElementById('finanzasCard').style.display = 'block';
             
             const actual = data.datos[0];
-            
+            const historico = [...data.datos].reverse(); // Orden cronológico para gráficos
+            const anios = historico.map(d => d.anio);
+
+            // 1. Llenar Métricas Clave
             document.getElementById('valIngresos').innerText = usd.format(actual.ingresos_ventas);
             document.getElementById('valUtilidad').innerText = usd.format(actual.utilidad_neta);
-            document.getElementById('valRoe').innerText = `${(actual.roe * 100).toFixed(1)}%`;
-            document.getElementById('valApalancamiento').innerText = actual.apalancamiento.toFixed(2);
-            document.getElementById('valEmpleados').innerText = actual.n_empleados || 'N/A';
-
-            const historico = [...data.datos].reverse();
-            const anios = historico.map(d => d.anio);
+            document.getElementById('valEmpleados').innerText = actual.n_empleados || '0';
             
+            // Cálculos
+            const productividad = actual.n_empleados > 0 ? (actual.ingresos_ventas / actual.n_empleados) : 0;
+            document.getElementById('valProductividad').innerText = usd.format(productividad);
+            document.getElementById('valCobertura').innerText = actual.cobertura_interes != null ? actual.cobertura_interes.toFixed(2) : 'N/A';
+
+            // 2. Llenar Modelo DuPont
+            document.getElementById('dpMargen').innerText = `${(actual.rent_neta_ventas * 100).toFixed(1)}%`;
+            document.getElementById('dpRotacion').innerText = actual.rot_ventas.toFixed(2);
+            document.getElementById('dpApalancamiento').innerText = actual.apalancamiento.toFixed(2);
+            document.getElementById('dpRoe').innerText = `${(actual.roe * 100).toFixed(1)}%`;
+
+            // Destruir gráficos anteriores para evitar superposiciones
             if (chartEvolucion) chartEvolucion.destroy();
-            const ctxEvolucion = document.getElementById('graficoEvolucion').getContext('2d');
-            chartEvolucion = new Chart(ctxEvolucion, {
+            if (chartMargenes) chartMargenes.destroy();
+            if (chartEstructura) chartEstructura.destroy();
+            if (chartCiclo) chartCiclo.destroy();
+
+            // 3. Gráfico: Evolución de Ingresos y Utilidad
+            chartEvolucion = new Chart(document.getElementById('graficoEvolucion').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: 'Ingresos por Ventas', data: historico.map(d => d.ingresos_ventas), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1 },
+                        { label: 'Ingresos Ventas', data: historico.map(d => d.ingresos_ventas), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.1 },
                         { label: 'Utilidad Neta', data: historico.map(d => d.utilidad_neta), borderColor: '#dc2626', backgroundColor: '#dc2626', tension: 0.1 }
                     ]
                 },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Evolución de Ingresos y Utilidad' } } }
+                options: { responsive: true, plugins: { title: { display: true, text: 'Volumen: Ingresos y Utilidad' } } }
             });
 
-            if (chartLiquidez) chartLiquidez.destroy();
-            const ctxLiquidez = document.getElementById('graficoLiquidez').getContext('2d');
-            chartLiquidez = new Chart(ctxLiquidez, {
+            // 4. Gráfico: Rentabilidad y Márgenes
+            chartMargenes = new Chart(document.getElementById('graficoMargenes').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: anios,
+                    datasets: [
+                        { label: 'Margen Bruto %', data: historico.map(d => d.margen_bruto * 100), borderColor: '#10b981', tension: 0.1 },
+                        { label: 'Margen Operacional %', data: historico.map(d => d.margen_operacional * 100), borderColor: '#f59e0b', tension: 0.1 },
+                        { label: 'Margen Neto %', data: historico.map(d => d.rent_neta_ventas * 100), borderColor: '#6366f1', tension: 0.1 }
+                    ]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Rentabilidad: Evolución de Márgenes' } } }
+            });
+
+            // 5. Gráfico: Estructura de Capital (Deuda vs Patrimonio)
+            chartEstructura = new Chart(document.getElementById('graficoEstructura').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: anios,
                     datasets: [
-                        { label: 'Liquidez Corriente', data: historico.map(d => d.liquidez_corriente), backgroundColor: '#10b981' },
-                        { label: 'Prueba Ácida', data: historico.map(d => d.prueba_acida), backgroundColor: '#f59e0b' }
+                        { label: '% Financiado con Deuda', data: historico.map(d => d.end_activo * 100), backgroundColor: '#ef4444' },
+                        { label: '% Financiado por Dueños', data: historico.map(d => d.fortaleza_patrimonial * 100), backgroundColor: '#3b82f6' }
                     ]
                 },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Liquidez Corriente vs Prueba Ácida' } } }
+                options: { 
+                    responsive: true, 
+                    plugins: { title: { display: true, text: 'Riesgo: Estructura de Capital (100% Activos)' } },
+                    scales: { x: { stacked: true }, y: { stacked: true, max: 100 } }
+                }
+            });
+
+            // 6. Gráfico: Ciclo Operativo (Días)
+            chartCiclo = new Chart(document.getElementById('graficoCiclo').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: anios,
+                    datasets: [
+                        { label: 'Días Promedio Cobro', data: historico.map(d => d.per_med_cobranza), backgroundColor: '#0ea5e9' },
+                        { label: 'Días Promedio Pago', data: historico.map(d => d.per_med_pago), backgroundColor: '#64748b' }
+                    ]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Eficiencia: Ciclo de Caja (Días)' } } }
             });
         }
     </script>
