@@ -386,42 +386,61 @@
                 }
             });
 
-            // 5. Gráfico: Rentabilidad (Recorte independiente de años vacíos)
-            let idxMargen = historico.findIndex(d => parseFloat(d.margen_bruto) || parseFloat(d.margen_operacional));
+            // 5. Gráfico: Evolución de Márgenes (Calculados en Vivo)
+            // Filtramos para iniciar el gráfico desde que hay ventas reales
+            let idxMargen = historico.findIndex(d => parseFloat(d.ingresos_ventas) > 1);
             let histMargen = idxMargen !== -1 ? historico.slice(idxMargen) : historico;
 
             chartMargenes = new Chart(document.getElementById('graficoMargenes').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: histMargen.map(d => d.anio), // Eje X recortado
+                    labels: histMargen.map(d => d.anio),
                     datasets: [
                         { 
                             label: 'Margen Bruto %', 
-                            data: histMargen.map(d => parseFloat(d.margen_bruto) ? parseFloat(d.margen_bruto) * 100 : null), 
-                            borderColor: '#10b981', tension: 0.1, yAxisID: 'y', spanGaps: true
+                            data: histMargen.map(d => {
+                                const v = parseFloat(d.ingresos_ventas) || 0;
+                                const cv = parseFloat(d.costos_ventas_prod) || 0;
+                                return v > 0 ? ((v - cv) / v) * 100 : null;
+                            }), 
+                            borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.2, spanGaps: true
                         },
                         { 
                             label: 'Margen Operacional %', 
-                            data: histMargen.map(d => parseFloat(d.margen_operacional) ? parseFloat(d.margen_operacional) * 100 : null), 
-                            borderColor: '#f59e0b', tension: 0.1, yAxisID: 'y1', spanGaps: true
+                            data: histMargen.map(d => {
+                                const v = parseFloat(d.ingresos_ventas) || 0;
+                                const cv = parseFloat(d.costos_ventas_prod) || 0;
+                                const ga = parseFloat(d.gastos_admin_ventas) || 0;
+                                return v > 0 ? (((v - cv) - ga) / v) * 100 : null;
+                            }), 
+                            borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.2, spanGaps: true
                         },
                         { 
                             label: 'Margen Neto %', 
                             data: histMargen.map(d => {
                                 const v = parseFloat(d.ingresos_ventas) || 0;
                                 const u = parseFloat(d.utilidad_neta) || 0;
-                                return v !== 0 ? (u / v) * 100 : null;
+                                return v > 0 ? (u / v) * 100 : null;
                             }), 
-                            borderColor: '#6366f1', tension: 0.1, yAxisID: 'y1', spanGaps: true
+                            borderColor: '#6366f1', backgroundColor: '#6366f1', tension: 0.2, spanGaps: true
                         }
                     ]
                 },
                 options: { 
                     responsive: true, 
-                    plugins: { title: { display: true, text: 'Rentabilidad: Evolución de Márgenes' } },
+                    plugins: { 
+                        title: { display: true, text: 'Rentabilidad: Evolución de Márgenes' },
+                        tooltip: { 
+                            callbacks: { 
+                                label: context => context.dataset.label + ': ' + (context.raw != null ? context.raw.toFixed(2) + '%' : 'N/A') 
+                            } 
+                        }
+                    },
                     scales: {
-                        y: { type: 'linear', position: 'left', title: { display: true, text: 'M. Bruto (%)' } },
-                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'M. Op / Neto (%)' }, grid: { drawOnChartArea: false } }
+                        y: { 
+                            type: 'linear', 
+                            title: { display: true, text: 'Porcentaje (%)' }
+                        }
                     }
                 }
             });
