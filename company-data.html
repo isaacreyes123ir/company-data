@@ -232,6 +232,12 @@
 
     <script>
         const API_BASE = "https://company-data.duckdns.org/api/v1";
+
+        // Configuro mi clave de acceso a la API
+        const API_KEY = "mi_clave_secreta_123";
+        const fetchOptions = {
+            headers: { "X-API-Key": API_KEY }
+        };
         
         // Variables de gráficos
         let chartEvolucion = null;
