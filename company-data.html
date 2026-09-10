@@ -279,7 +279,7 @@
             clearTimeout(timeoutBuscador);
             timeoutBuscador = setTimeout(async () => {
                 try {
-                    const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
+                    const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`, fetchOptions);
                     if (!res.ok) return;
                     const coincidencias = await res.json();
                     
