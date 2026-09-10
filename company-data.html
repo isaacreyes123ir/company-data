@@ -348,7 +348,7 @@
 
             try {
                 // 1. OBTENER Y MOSTRAR PERFIL INMEDIATAMENTE
-                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
+                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`, fetchOptions);
                 if (!resPerfil.ok) throw new Error('Empresa no encontrada.');
                 const perfil = await resPerfil.json();
                 
@@ -357,7 +357,7 @@
                 // 2. DISPARAR FINANZAS EN SEGUNDO PLANO (No bloquea la página)
                 const expediente = perfil.directorio ? perfil.directorio.expediente : null;
                 if (expediente) {
-                    fetch(`${API_BASE}/finanzas/${expediente}`)
+                    fetch(`${API_BASE}/finanzas/${expediente}`, fetchOptions)
                         .then(res => res.ok ? res.json() : null)
                         .then(finanzas => {
                             if (finanzas) renderizarFinanzas(finanzas);
@@ -366,7 +366,7 @@
                 }
 
                 // 3. DISPARAR SERCOP EN SEGUNDO PLANO (No bloquea la página)
-                fetch(`${API_BASE}/compras-publicas/${ruc}`)
+                fetch(`${API_BASE}/compras-publicas/${ruc}`, fetchOptions)
                     .then(res => res.ok ? res.json() : null)
                     .then(sercop => {
                         renderizarSercop(sercop);
