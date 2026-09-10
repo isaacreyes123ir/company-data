@@ -32,7 +32,8 @@
         /* Buscador Glassmorphism */
         .search-container { position: relative; display: flex; gap: 10px; margin-bottom: 20px; }
         .autocomplete-wrapper { position: relative; flex: 1; }
-        input { width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 12px; font-size: 16px; box-sizing: border-box; backdrop-filter: blur(10px); }
+        input { width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 12px; font-size: 16px; box-sizing: border-box; backdrop-filter: blur(10px); outline: none; }
+        input:focus { border-color: #d9f95d; }
         input::placeholder { color: rgba(255, 255, 255, 0.6); }
         button { padding: 12px 24px; background-color: #d9f95d; color: #1a1a1a; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; white-space: nowrap; }
         button:hover { background-color: #c4e54a; }
