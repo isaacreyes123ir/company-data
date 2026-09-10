@@ -1,7 +1,7 @@
 # company-data
 
 ┌─────────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────┐     ┌─────────────┐
-│  FUENTES OFICIALES  │────▶│  PROCESADORES  │────▶│   AWS S3    │────▶│  INYECTORES │────▶│  RDS POSTGRES  │
+│ FUENTES OFICIALES│────▶│PROCESADORES│────▶│   AWS S3    │───▶│INYECTORES│────▶│RDS POSTGRES │
 │  (SRI, SERCOP,  │     │  (5 scripts) │     │(CSV/Parquet)│     │(Blue/Green)│   │(4 tablas)   │
 │   SuperCías)    │     │              │     │             │     │          │     │             │
 └─────────────────┘     └──────────────┘     └─────────────┘     └──────────┘     └─────────────┘
