@@ -309,18 +309,18 @@
         async function preCargarEmpresa(ruc) {
             datosPrecargados = null;
             try {
-                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
+                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`, fetchOptions);
                 if (!resPerfil.ok) return;
                 const perfil = await resPerfil.json();
                 
                 let finanzas = null, sercop = null;
                 const expediente = perfil.directorio ? perfil.directorio.expediente : null;
                 if (expediente) {
-                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
+                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`, fetchOptions);
                     if (resFinanzas.ok) finanzas = await resFinanzas.json();
                 }
                 
-                const resSercop = await fetch(`${API_BASE}/compras-publicas/${ruc}`);
+                const resSercop = await fetch(`${API_BASE}/compras-publicas/${ruc}`, fetchOptions);
                 if (resSercop.ok) sercop = await resSercop.json();
 
                 datosPrecargados = { ruc: ruc, perfil: perfil, finanzas: finanzas, sercop: sercop };
