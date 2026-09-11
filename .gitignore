@@ -1,0 +1,14 @@
+# Entorno virtual y dependencias
+__pycache__/
+*.pyc
+venv/
+env/
+
+# Variables de entorno y secretos (¡CRÍTICO!)
+.env
+.env.*
+
+# Archivos temporales de datos
+*.csv
+*.zip
+temp_/
