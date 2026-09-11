@@ -486,18 +486,10 @@ docker run -d -p 8000:8000 --env-file .env plataforma-societaria-api
 
 ---
 
-## 🤝 Contribuir
+## 📝 Licencia y Propiedad Intelectual
+Este proyecto contiene código fuente propietario y confidencial. Todos los derechos reservados.
 
-1. Fork el repo
-2. Crea branch: `git checkout -b feature/mi-mejora`
-3. Commit: `git commit -m 'feat: descripción clara'`
-4. Push: `git push origin feature/mi-mejora`
-5. Abre Pull Request
-
-**Convenciones:**
-- Commits: [Conventional Commits](https://www.conventionalcommits.org/)
-- Code style: `ruff` + `black` (config en `pyproject.toml` futuro)
-- Type hints obligatorios en código nuevo
+No se autoriza la copia, modificación, distribución, creación de trabajos derivados ni el uso comercial de este código fuente o sus componentes, de forma total o parcial, sin el consentimiento expreso y por escrito del autor.
 
 ---
 
