@@ -11,16 +11,6 @@
 
 ---
 
-## 📸 Demo
-
-| Dashboard | Detalle Financiero (DuPont + 6 Gráficos) | Compras Públicas |
-|-----------|------------------------------------------|------------------|
-| ![Dashboard](https://via.placeholder.com/400x200/2c2c2c/d9f95d?text=Dashboard+Preview) | ![Finanzas](https://via.placeholder.com/400x200/2c2c2c/d9f95d?text=Modelo+DuPont) | ![SERCOP](https://via.placeholder.com/400x200/2c2c2c/d9f95d?text=Contratos+Estado) |
-
-> **Live:** [company-data.duckdns.org](https://company-data.duckdns.org) (GitHub Pages + API en EC2)
-
----
-
 ## 🗂️ Arquitectura General
 
 ```
