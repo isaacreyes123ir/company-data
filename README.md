@@ -81,8 +81,8 @@ Este proyecto consolida **cuatro fuentes oficiales ecuatorianas** en una sola pl
 |--------|--------|------------|---------|-------|
 | `procesador_sri_nacional.py` | `descargas.sri.gob.ec` | Mensual | 24 CSV/zip (pipe `|`) | Une provincias; limpia filas rotas |
 | `procesador_supercias.py` | `mercadodevalores.supercias.gob.ec` | Diario | XLSX (skiprows=4) | Directorio de compañías |
-| `automatizador_sercop.py` | `datosabiertos.compraspublicas.gob.ec` | Anual (2015+) | ZIP (3 CSV OCDS) | Une contracts+suppliers+tender |
-| `procesador_financiero.py` | `appscvsmovil.supercias.gob.ec` | Mensual | CSV (bi_ranking) | Histórico completo anual |
+| `automatizador_sercop.py` | `datosabiertos.compraspublicas.gob.ec` | Semanal (2015+) | ZIP (3 CSV OCDS) | Une contracts+suppliers+tender |
+| `procesador_financiero.py` | `appscvsmovil.supercias.gob.ec` | Diario | CSV (bi_ranking) | Histórico completo anual |
 
 ---
 
