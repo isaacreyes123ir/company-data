@@ -47,23 +47,23 @@ Este proyecto consolida **cuatro fuentes oficiales ecuatorianas** en una sola pl
 ## 🏗️ Arquitectura
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐     ┌──────────────┐     ┌────────────────┐
-│  FUENTES OFICIALES │────▶│  PROCESADORES    │────▶│   AWS S3    │────▶│  INYECTORES  │────▶│  RDS POSTGRES  │
-│  (SRI, SERCOP,   │     │  (5 scripts Py)  │     │  (CSV/Parquet)│     │  (Blue/Green)│     │  (4 tablas)    │
-│   SuperCías)     │     │                  │     │             │     │             │     │                │
-└─────────────────┘     └──────────────────┘     └─────────────┘     └──────────────┘     └────────────────┘
-                                                                                           │
-                                                                                           ▼
-                                                                                   ┌─────────────────┐
-                                                                                   │  API FASTAPI    │
-                                                                                   │  (api.py)       │
-                                                                                   └─────────────────┘
-                                                                                           │
-                                                                                           ▼
-                                                                                   ┌─────────────────┐
-                                                                                   │  FRONTEND HTML  │
-                                                                                   │ (company-data)  │
-                                                                                   └─────────────────┘
+┌──────────────────┐     ┌──────────────────┐     ┌───────────────┐      ┌──────────────┐     ┌────────────────┐
+│FUENTES OFICIALES │───▶│  PROCESADORES    │────▶│     AWS S3    │────▶│  INYECTORES  │────▶│  RDS POSTGRES  │
+│  (SRI, SERCOP,   │     │  (5 scripts Py)  │     │  (CSV/Parquet)│      │ (Blue/Green) │     │   (4 tablas)   │
+│   SuperCías)     │     │                  │     │               │      │              │     │                │
+└──────────────────┘     └──────────────────┘     └───────────────┘      └──────────────┘     └────────────────┘
+                                                                                                      │
+                                                                                                      ▼
+                                                                                              ┌─────────────────┐
+                                                                                              │  API FASTAPI    │
+                                                                                              │  (api.py)       │
+                                                                                              └─────────────────┘
+                                                                                                      │
+                                                                                                      ▼
+                                                                                              ┌─────────────────┐
+                                                                                              │  FRONTEND HTML  │
+                                                                                              │ (company-data)  │
+                                                                                              └─────────────────┘
 ```
 
 ### Patrones clave
