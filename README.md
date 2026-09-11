@@ -7,7 +7,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql)
 ![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?logo=chart.js)
-![AWS](https://img.shields.io/badge/AWS-S3%20%2B%20RDS-FF9900?logo=amazon-aws)
+![AWS](https://img.shields.io/badge/AWS-S3%20%2B%20RDS%20%2B%20EC2-FF9900?logo=amazon-aws)
 
 ---
 
