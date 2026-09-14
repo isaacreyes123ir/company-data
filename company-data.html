@@ -233,10 +233,14 @@
     <script>
         const API_BASE = "https://company-data.duckdns.org/api/v1";
 
-        // Configuro mi clave de acceso a la API
-        const API_KEY = "M1_C0NTRASEÑA_123";
+        // Apunta al Worker de Cloudflare
+        const API_BASE = "https://proxy-societario.isaacreyes123-ir.workers.dev/api/v1";
+
+        // Ya no necesitas la llave.
         const fetchOptions = {
-            headers: { "X-API-Key": API_KEY }
+            headers: {
+                "Content-Type": "application/json"
+            }
         };
         
         // Variables de gráficos
