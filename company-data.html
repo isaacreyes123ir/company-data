@@ -275,7 +275,7 @@
             clearTimeout(timeoutBuscador);
             timeoutBuscador = setTimeout(async () => {
                 try {
-                    const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`, fetchOptions);
+                    const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(val)}`);
                     if (!res.ok) return;
                     const coincidencias = await res.json();
                     
@@ -305,18 +305,18 @@
         async function preCargarEmpresa(ruc) {
             datosPrecargados = null;
             try {
-                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`, fetchOptions);
+                const resPerfil = await fetch(`${API_BASE}/perfil/${ruc}`);
                 if (!resPerfil.ok) return;
                 const perfil = await resPerfil.json();
                 
                 let finanzas = null, sercop = null;
                 const expediente = perfil.directorio ? perfil.directorio.expediente : null;
                 if (expediente) {
-                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`, fetchOptions);
+                    const resFinanzas = await fetch(`${API_BASE}/finanzas/${expediente}`);
                     if (resFinanzas.ok) finanzas = await resFinanzas.json();
                 }
                 
-                const resSercop = await fetch(`${API_BASE}/compras-publicas/${ruc}`, fetchOptions);
+                const resSercop = await fetch(`${API_BASE}/compras-publicas/${ruc}`);
                 if (resSercop.ok) sercop = await resSercop.json();
 
                 datosPrecargados = { ruc: ruc, perfil: perfil, finanzas: finanzas, sercop: sercop };
