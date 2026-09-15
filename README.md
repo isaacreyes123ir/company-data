@@ -384,34 +384,33 @@ pytest tests/ -v --cov=api --cov=procesador_*
 
 ---
 
-## 📦 CI/CD (GitHub Actions Sugerido)
+## 📊 **Monitoreo y Operación**
 
-```yaml
-# .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env: { POSTGRES_PASSWORD: test }
-        ports: [5432:5432]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - run: pip install -r requirements.txt pytest pytest-asyncio httpx
-      - run: pytest -v
-  
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install ruff mypy
-      - run: ruff check . && mypy api.py
-```
+### **Logs Clave**
+| Archivo | Contenido |
+|---------|-----------|
+| `/home/ubuntu/log_directorio.txt` | ETL Supercias + Inyección |
+| `/home/ubuntu/log_financiero.txt` | ETL Financiero + Inyección |
+| `/home/ubuntu/log_sercop.txt` | ETL SERCOP (semanal) |
+| `/home/ubuntu/log_sri.txt` | ETL SRI (mensual) |
+
+### **Métricas a Observar**
+- ✅ **Filas procesadas** vs esperadas (validar completitud)
+- ⏱️ **Duración ETL** (alertar si > 2x histórico)
+- 💾 **Espacio disco EC2** (limpieza `finally` debe dejar 0 archivos temp)
+- 🐘 **Conexiones pool RDS** (max 20, alertar si saturado)
+- 🔑 **Cache hits API Key** (target > 95%)
+- ⚡ **Latencia P99 /perfil** (target < 100ms)
+
+### **Runbook Común**
+
+| Incidente | Acción |
+|-----------|--------|
+| ETL falla descarga | Reintentar manual; fuentes suelen tener ventanas de mantenimiento |
+| Inyección falla COPY | Verificar encoding CSV (`utf-8-sig` vs `latin1`), delimitadores |
+| API 503 healthcheck | Verificar RDS security groups + credenciales `.env` |
+| Frontend "CORS error" | Validar `ORIGINS_1/2` en `.env` coinciden con origen real |
+| Índices duplicados (`_idx5`, `_idx6`) | `DROP INDEX` los redundantes; mantener `btree` + `gin_trgm` |
 
 ---
 
