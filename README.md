@@ -165,55 +165,13 @@ plataforma-societaria/
 ```
 ---
 
-## 🔐 Seguridad y Red
+## 🔒 **Seguridad**
 
-```mermaid
-flowchart TB
-    subgraph INTERNET[🌐 Internet]
-        USER[Usuario Final\nNavegador]
-        DEV[Desarrollador\ncurl / SDK / Postman]
-    end
-
-    subgraph EDGE[🛡️ Edge]
-        CF[Cloudflare Workers\nProxy SSL + Rate Limit\nproxy-societario.isaacreyes123-ir.workers.dev]
-    end
-
-    subgraph VPC[AWS VPC]
-        subgraph PUBLIC[Subnet Pública]
-            ALB[ALB / API Gateway\n(Opcional)]
-        end
-        
-        subgraph PRIVATE[Subnet Privada]
-            EC2[EC2 t3.small\nUbuntu 22.04\nCron + Python + Uvicorn]
-        end
-        
-        subgraph DATA[Subnet Datos]
-            RDS[(RDS PostgreSQL 16\nMulti-AZ\nSecurity Group: solo EC2 SG)]
-            S3[(S3 Bucket\nVersionado + Lifecycle\nBlock Public Access)]
-        end
-    end
-
-    subgraph SECRETS[🔐 Secrets Manager]
-        SM[RDS Credentials\nAPI Keys Master\nS3 Access Keys]
-    end
-
-    USER -->|HTTPS| CF
-    DEV -->|HTTPS + API Key| CF
-    CF -->|Forward| ALB
-    ALB -->|Private IP| EC2
-    
-    EC2 -.->|IAM Role\n(S3FullAccess\nRDSDataFullAccess)| S3
-    EC2 -.->|IAM Role\n(SecretsManagerReadWrite)| SM
-    EC2 -->|psycopg2 pool\nPort 5432| RDS
-    
-    RDS -.->|Backup Automático\nPoint-in-time Recovery| S3
-
-    style INTERNET fill:#e3f2fd,stroke:#1565c0
-    style EDGE fill:#fff3e0,stroke:#ef6c00
-    style VPC fill:#f3e5f5,stroke:#7b1fa2
-    style DATA fill:#e8f5e9,stroke:#2e7d32
-    style SECRETS fill:#fce4ec,stroke:#c2185b
-```
+- **API Keys**: Hash no almacenado (validación directa), expiración configurable, partial index `WHERE activa=true`
+- **RDS**: Security Group solo permite EC2 SG + tu IP admin
+- **S3**: Bucket sin acceso público, solo IAM role EC2 + tu user
+- **Secrets**: **NO commitear `.env`** → usar AWS Secrets Manager / Parameter Store en prod
+- **CORS**: Restringido a `ORIGINS_1/2` explícitos (no `*`)
 
 ---
 
