@@ -195,20 +195,31 @@ curl -H "X-API-Key: TU_CLAVE" \
 
 ---
 
-## 🎨 Frontend — Características
+## 🎨 **Frontend (company-data.html)**
 
-- **Glassmorphism UI** con backdrop-filter, gradientes aurora, badges neón
-- **Autocompletado** debounced (300ms) contra `/buscar`
-- **Carga paralela**: Perfil inmediato → Finanzas/SERCOP en background
-- **Modelo DuPont en vivo**: Margen × Rotación × Apalancamiento = ROE
-- **6 Gráficos Chart.js**:
-  1. Evolución Ingresos vs Utilidad (eje dual)
-  2. Márgenes Bruto/Operacional/Neto (recorte inteligente eje X)
-  3. Estructura Capital (stacked bar 100%)
-  4. Liquidez Corriente + Prueba Ácida
-  5. Solvencia: Endeudamiento Activo % + Patrimonial (eje dual)
-  6. Gestión: Rotación Cartera / Activo Fijo / Ventas
-- **Modal SERCOP**: Agrupado por año + entidad, montos formateados USD
+**SPA completa en un archivo** — sin build, sin node_modules, deployable estático.
+
+### **Características**
+- 🔍 **Autocomplete inteligente** (debounce 300ms, precarga paralela)
+- 📋 **Tarjeta Perfil**: Badges de estado (SRI/Supercias) con colores semánticos
+- 💰 **Módulo Finanzas**:
+  - 6 KPIs: Ingresos, Utilidad, Empleados, Productividad, Cobertura Interés
+  - **Modelo DuPont en vivo**: Margen × Rotación × Apalancamiento = ROE
+  - 6 Gráficos Chart.js: Evolución (dual-eje), Márgenes, Estructura Capital (stacked), Liquidez, Solvencia (dual-eje), Gestión
+- 🏛️ **Modal SERCOP**: Agrupación Año → Entidad (contratos + monto total)
+- 🌙 **UI Glassmorphism/Aurora**: CSS moderno, responsive, modo oscuro nativo
+
+### **Deploy Frontend**
+```bash
+# Opción 1: GitHub Pages
+git add company-data.html && git commit -m "deploy" && git push
+
+# Opción 2: AWS S3 Static Website
+aws s3 cp company-data.html s3://tu-bucket/index.html --content-type text/html
+
+# Opción 3: Cloudflare Pages
+# Conecta repo → Build command: "echo 'static'" → Output: "/"
+```
 
 ---
 
